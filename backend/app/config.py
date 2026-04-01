@@ -67,6 +67,7 @@ class Config:
     else:
         JWT_COOKIE_SECURE = False
         JWT_COOKIE_CSRF_PROTECT = False
+        logger.warning("CSRF protection DISABLED (development mode). Do NOT deploy with FLASK_ENV=development.")
 
     JWT_ACCESS_COOKIE_NAME = "access_token"
     JWT_REFRESH_COOKIE_NAME = "refresh_token"

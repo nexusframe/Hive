@@ -29,6 +29,10 @@ class UserService:
         if existing_user:
             logger.warning("Attempted to register user with existing username", extra={"username": username})
             raise ValidationError("User already exists")
+        existing_email = self.repo.find_by_email(email)
+        if existing_email:
+            logger.warning("Attempted to register user with existing email", extra={"email": email})
+            raise ValidationError("Email already registered")
         hashed_pw = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
         now_iso = datetime.datetime.now(timezone.utc).isoformat()
         user_data = {
@@ -54,7 +58,7 @@ class UserService:
             user = self.repo.find_by_username(username_or_email)
         if not user:
             logger.warning("Login attempt for non-existent user", extra={"username_or_email": username_or_email})
-            raise UnauthorizedError("User not found")
+            raise UnauthorizedError("Invalid credentials")
         if not bcrypt.checkpw(password.encode("utf-8"), user["password"]):
             logger.warning("Invalid credentials", extra={"username_or_email": username_or_email})
             raise UnauthorizedError("Invalid credentials")
@@ -181,6 +185,12 @@ class UserService:
             updated_user.pop("refresh_token")
         logger.info("User updated successfully", extra={"user_id": user_id})
         return {"message": "User updated successfully", "user": updated_user}
+
+    def list_users(self, page=1, size=10):
+        skip = (page - 1) * size
+        users = self.repo.list_users(skip=skip, limit=size)
+        logger.info("Listed users", extra={"page": page, "size": size, "count": len(users)})
+        return users
 
     def delete_user(self, user_id):
         success = self.repo.delete_user(user_id)

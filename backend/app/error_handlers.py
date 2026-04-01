@@ -98,5 +98,5 @@ def register_error_handlers(app):
     @app.errorhandler(Exception)
     def handle_exception(e):
         app.logger.error("Unhandled Exception: %s", str(e), exc_info=True)
-        response = {"error": "Internal Server Error", "message": str(e)}
+        response = {"error": "Internal Server Error", "message": "An unexpected error occurred"}
         return jsonify(response), 500

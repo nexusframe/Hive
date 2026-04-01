@@ -2,9 +2,12 @@
 References: backend/__docs__/useCases/article/UseCase_CreateArticle.md
 
 Test Scenarios:
-1. Successful creation of an article by a moderator or admin.
-2. Failure when required fields are missing.
-3. Unauthorized creation attempt by a user with a role of regular.
+1. Admin creates article -> 201
+2. Moderator creates article -> 201
+3. Missing title -> 400
+4. Missing content -> 400
+5. Regular user -> 403
+6. No token -> 401
 """
 
 import unittest
@@ -21,104 +24,65 @@ class TestCreateArticle(unittest.TestCase):
         cls.client = cls.app.test_client()
         cls.mongo_client = MongoClient(Config.MONGO_URI)
         cls.test_db = cls.mongo_client[Config.MONGO_DB_NAME]
-        # Clear collections.
         cls.test_db.users.delete_many({})
         cls.test_db.articles.delete_many({})
 
-        # Register a moderator.
-        moderator = {
-            "username": "moduser",
-            "email": "mod@example.com",
-            "password": "password123"
-        }
-        cls.client.post("/api/register", json=moderator)
-        # Force role update to moderator
+        # Register users
+        cls.client.post("/api/register", json={"username": "moduser", "email": "mod@example.com", "password": "password123"})
         cls.test_db.users.update_one({"username": "moduser"}, {"$set": {"role": "moderator"}})
 
-        # Register an admin user.
-        admin = {
-            "username": "adminuser",
-            "email": "admin@example.com",
-            "password": "password123"
-        }
-        cls.client.post("/api/register", json=admin)
+        cls.client.post("/api/register", json={"username": "adminuser", "email": "admin@example.com", "password": "password123"})
         cls.test_db.users.update_one({"username": "adminuser"}, {"$set": {"role": "admin"}})
-        # Register a regular user.
-        regular = {
-            "username": "regularuser",
-            "email": "regular@example.com",
-            "password": "password123"
-        }
-        cls.client.post("/api/register", json=regular)
 
-    def get_access_token(self, username_or_email, password):
-        """Helper to log in a user and return the access token from JSON."""
-        resp = self.client.post(
-            "/api/login",
-            json={"username_or_email": username_or_email, "password": password}
-        )
-        self.assertEqual(resp.status_code, 200, "Login should succeed")
-        data = resp.get_json()
-        self.assertIn("access_token", data)
-        return data["access_token"]
+        cls.client.post("/api/register", json={"username": "regularuser", "email": "regular@example.com", "password": "password123"})
+
+    def _get_token(self, username):
+        resp = self.client.post("/api/login", json={"username_or_email": username, "password": "password123"})
+        self.assertEqual(resp.status_code, 200)
+        return resp.get_json()["access_token"]
 
     def test_create_article_success_admin(self):
-        # Log in as admin.
-        access_token = self.get_access_token("adminuser", "password123")
-        article_data = {
-            "title": "Admin Article",
-            "content": "This is an article created by admin."
-        }
-        headers = {"Cookie": f"access_token={access_token}"}
-        resp = self.client.post("/api/articles", json=article_data, headers=headers)
-        self.assertEqual(resp.status_code, 201, "Expected 201 status on successful creation by admin")
+        token = self._get_token("adminuser")
+        self.client.set_cookie("access_token", token, domain="localhost")
+        resp = self.client.post("/api/articles", json={"title": "Admin Article", "content": "Content by admin."})
+        self.assertEqual(resp.status_code, 201)
         data = resp.get_json()
-        self.assertIn("message", data)
         self.assertEqual(data["message"], "Article created successfully")
         self.assertIn("article_id", data)
 
     def test_create_article_success_moderator(self):
-        # Log in as moderator.
-        access_token = self.get_access_token("moduser", "password123")
-        article_data = {
-            "title": "Test Article",
-            "content": "This is the content of the test article."
-        }
-        headers = {"Cookie": f"access_token={access_token}"}
-        resp = self.client.post("/api/articles", json=article_data, headers=headers)
-        self.assertEqual(resp.status_code, 201, "Expected 201 status on successful creation")
+        token = self._get_token("moduser")
+        self.client.set_cookie("access_token", token, domain="localhost")
+        resp = self.client.post("/api/articles", json={"title": "Mod Article", "content": "Content by moderator."})
+        self.assertEqual(resp.status_code, 201)
         data = resp.get_json()
-        self.assertIn("message", data)
         self.assertEqual(data["message"], "Article created successfully")
         self.assertIn("article_id", data)
 
-    def test_create_article_missing_fields(self):
-        # Log in as moderator.
-        access_token = self.get_access_token("moduser", "password123")
-        # Provide article data missing the "title"
-        article_data = {
-            "content": "Content without a title."
-        }
-        headers = {"Cookie": f"access_token={access_token}"}
-        resp = self.client.post("/api/articles", json=article_data, headers=headers)
-        self.assertEqual(resp.status_code, 400, "Expected 400 status when required fields are missing")
-        data = resp.get_json()
-        self.assertIn("error", data)
-        self.assertIn("Missing title or content", data["error"])
+    def test_create_article_missing_title(self):
+        token = self._get_token("moduser")
+        self.client.set_cookie("access_token", token, domain="localhost")
+        resp = self.client.post("/api/articles", json={"content": "Content without title."})
+        self.assertEqual(resp.status_code, 400)
+
+    def test_create_article_missing_content(self):
+        token = self._get_token("moduser")
+        self.client.set_cookie("access_token", token, domain="localhost")
+        resp = self.client.post("/api/articles", json={"title": "Title without content"})
+        self.assertEqual(resp.status_code, 400)
 
     def test_create_article_unauthorized(self):
-        # Log in as regular user (unauthorized to create articles)
-        access_token = self.get_access_token("regularuser", "password123")
-        article_data = {
-            "title": "Unauthorized Article",
-            "content": "This content should not be allowed for regular users."
-        }
-        headers = {"Cookie": f"access_token={access_token}"}
-        resp = self.client.post("/api/articles", json=article_data, headers=headers)
-        self.assertEqual(resp.status_code, 403, "Expected 403 Forbidden for unauthorized article creation")
-        data = resp.get_json()
-        self.assertIn("error", data)
-        self.assertIn("not authorized", data["error"].lower())
+        token = self._get_token("regularuser")
+        self.client.set_cookie("access_token", token, domain="localhost")
+        resp = self.client.post("/api/articles", json={"title": "Unauthorized", "content": "Should fail."})
+        self.assertEqual(resp.status_code, 403)
+        self.assertIn("not authorized", resp.get_json()["error"].lower())
+
+    def test_create_article_no_token(self):
+        """Request without auth token should return 401."""
+        self.client.delete_cookie("access_token", domain="localhost")
+        resp = self.client.post("/api/articles", json={"title": "No auth", "content": "No auth content"})
+        self.assertIn(resp.status_code, [401, 422])
 
     @classmethod
     def tearDownClass(cls):

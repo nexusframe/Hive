@@ -17,8 +17,6 @@ class ArticleService:
             raise ValidationError("Title is required")
         if not content or not content.strip():
             raise ValidationError("Content is required")
-        if title.strip().lower() == "fail":
-            raise RepositoryError("Forced failure")
         article_data = {
             "title": title,
             "content": content,
@@ -60,7 +58,10 @@ class ArticleService:
         update_data["updated_at"] = datetime.now(timezone.utc)
         success = self.repo.update_article(article_id, update_data)
         if not success:
-            raise ArticleNotFoundError(f"Article with id {article_id} not found")
+            # modified_count==0 can mean "not found" OR "same data". Check which.
+            existing = self.repo.get_article_by_id(article_id)
+            if not existing:
+                raise ArticleNotFoundError(f"Article with id {article_id} not found")
         return {"message": "Article updated successfully"}
 
     def delete_article(self, article_id):

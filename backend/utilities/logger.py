@@ -38,7 +38,7 @@ def get_logger(name, level=None):
         handler = logging.StreamHandler(sys.stdout)
         formatter = UTCFormatter(
             fmt="%(asctime)s %(levelname)s %(name)s %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S:%M.%f",
+            datefmt="%Y-%m-%d %H:%M:%S.%f",  # Fixed: was %H:%M:%S:%M.%f (minutes duplicated)
         )
         handler.setFormatter(formatter)
         logger.addHandler(handler)

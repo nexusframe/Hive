@@ -8,29 +8,25 @@ from app.config import Config
 from app.schemas import UserRegisterSchema, UserLoginSchema, UserUpdateSchema
 from utilities.decorators import validate_request
 from utilities.auth_utils import set_auth_cookies, delete_auth_cookies
+from app.extensions import limiter
 
 user_routes = Blueprint("user_routes", __name__)
 user_service = UserService(Config)
 
-def get_limiter():
-    """Get limiter instance from app context."""
-    from flask import current_app
-    return current_app.extensions.get('limiter')
-
 
 @user_routes.route("/api/register", methods=["POST"])
+@limiter.limit(Config.RATELIMIT_AUTH)
 @validate_request(UserRegisterSchema)
 def register(validated_data):
-    # Rate limiting applied via limiter decorator in __init__.py
     result = user_service.register_user(
         validated_data["username"], validated_data["email"], validated_data["password"]
     )
     return jsonify(result), 201
 
 @user_routes.route("/api/login", methods=["POST"])
+@limiter.limit(Config.RATELIMIT_AUTH)
 @validate_request(UserLoginSchema)
 def login(validated_data):
-    # Rate limiting applied via limiter decorator in __init__.py
     result = user_service.login_user(
         validated_data["username_or_email"], validated_data["password"]
     )
@@ -57,6 +53,20 @@ def login(validated_data):
 
 @user_routes.route("/api/logout", methods=["POST"])
 def logout():
+    # Invalidate refresh token server-side if we can identify the user
+    refresh_token = request.cookies.get("refresh_token", "")
+    if refresh_token:
+        try:
+            payload = jwt.decode(
+                refresh_token, Config.JWT_SECRET_KEY,
+                algorithms=[Config.JWT_ALGORITHM],
+                options={"verify_exp": False}
+            )
+            username = payload.get("sub")
+            if username:
+                user_service.repo.clear_refresh_token(username)
+        except jwt.InvalidTokenError:
+            pass  # Token invalid/expired — just clear cookies
     response = make_response(jsonify({"message": "Logged out successfully"}))
     delete_auth_cookies(response, Config)
     return response
@@ -147,19 +157,9 @@ def list_users():
     try:
         page = int(request.args.get("page", 1))
         size = int(request.args.get("size", 10))
-        if page < 1 or size < 1:
-            raise ValueError("Pagination parameters must be positive integers")
     except ValueError:
         return jsonify({"error": "Invalid pagination parameters"}), 400
-    skip = (page - 1) * size
-    cursor = user_service.repo.users.find({}).sort("username", 1).skip(skip).limit(size)
-    users = []
-    for user in cursor:
-        # Remove sensitive fields and convert ObjectId to string.
-        user["_id"] = str(user["_id"])
-        if "password" in user:
-            user.pop("password")
-        if "refresh_token" in user:
-            user.pop("refresh_token")
-        users.append(user)
+    page = max(1, page)
+    size = max(1, min(size, 100))
+    users = user_service.list_users(page=page, size=size)
     return jsonify(users), 200

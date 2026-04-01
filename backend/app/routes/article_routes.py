@@ -1,7 +1,9 @@
 # app/routes/article_routes.py
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
+from app.config import Config
 from app.schemas import ArticleCreateSchema, ArticleUpdateSchema
+from app.extensions import limiter
 from utilities.custom_exceptions import ValidationError
 from utilities.decorators import validate_request
 
@@ -14,12 +16,15 @@ def get_articles():
         limit = int(request.args.get("limit", 2))
     except ValueError:
         return jsonify({"error": "Invalid pagination parameters"}), 400
+    page = max(1, page)
+    limit = max(1, min(limit, 100))
 
     # Call the service method with page and limit.
     articles = current_app.article_service.get_all_articles(page=page, limit=limit)
     return jsonify(articles)
 
 @article_routes.route("/api/articles", methods=["POST"])
+@limiter.limit(Config.RATELIMIT_WRITE)
 @jwt_required()
 @validate_request(ArticleCreateSchema)
 def create_article(validated_data):
@@ -47,6 +52,7 @@ def get_article(article_id):
     return jsonify(result)
 
 @article_routes.route("/api/articles/<article_id>", methods=["PUT"])
+@limiter.limit(Config.RATELIMIT_WRITE)
 @jwt_required()
 @validate_request(ArticleUpdateSchema)
 def update_article(article_id, validated_data):
@@ -72,6 +78,7 @@ def update_article(article_id, validated_data):
     return jsonify(result), 200
 
 @article_routes.route("/api/articles/<article_id>", methods=["DELETE"])
+@limiter.limit(Config.RATELIMIT_WRITE)
 @jwt_required()
 def delete_article(article_id):
     # Retrieve the JWT claims and identity

@@ -6,7 +6,10 @@ from .db import get_db  # Use the getter function instead of importing db direct
 
 logger = get_logger(__name__)
 
-class MongoUserRepository:
+from .base_user_repository import BaseUserRepository
+
+
+class MongoUserRepository(BaseUserRepository):
     def __init__(self):
         self.db = get_db()
         self.users = self.db.users
@@ -63,10 +66,9 @@ class MongoUserRepository:
         try:
             result = self.users.update_one(
                 {"username": username},
-                {"$set": {"refresh_token": hashed_refresh}},
-                upsert=True
+                {"$set": {"refresh_token": hashed_refresh}}
             )
-            return result.modified_count > 0 or result.upserted_id is not None
+            return result.modified_count > 0
         except errors.PyMongoError as e:
             logger.error("Error storing refresh token", extra={"username": username, "error": str(e)})
             raise e
@@ -79,4 +81,28 @@ class MongoUserRepository:
             return None
         except errors.PyMongoError as e:
             logger.error("Error retrieving refresh token", extra={"username": username, "error": str(e)})
+            raise e
+
+    def list_users(self, skip=0, limit=10):
+        try:
+            cursor = self.users.find({}).sort("username", 1).skip(skip).limit(limit)
+            users = []
+            for user in cursor:
+                user["_id"] = str(user["_id"])
+                user.pop("password", None)
+                user.pop("refresh_token", None)
+                users.append(user)
+            return users
+        except errors.PyMongoError as e:
+            logger.error("Error listing users", extra={"error": str(e)})
+            raise e
+
+    def clear_refresh_token(self, username):
+        try:
+            self.users.update_one(
+                {"username": username},
+                {"$unset": {"refresh_token": ""}}
+            )
+        except errors.PyMongoError as e:
+            logger.error("Error clearing refresh token", extra={"username": username, "error": str(e)})
             raise e

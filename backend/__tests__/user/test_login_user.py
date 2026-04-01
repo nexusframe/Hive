@@ -124,7 +124,7 @@ class TestLoginUser(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
         data = response.get_json()
         self.assertIn("error", data)
-        self.assertIn("User not found", data["error"])
+        self.assertIn("Invalid credentials", data["error"])
 
     def test_login_invalid_password(self):
         """
