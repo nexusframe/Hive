@@ -12,35 +12,26 @@ const SearchArticles = () => {
   const abortControllerRef = useRef(null)
 
   const performSearch = async (searchQuery) => {
-    // Cancel previous request if exists
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
     }
-
-    // Create new AbortController for this request
     abortControllerRef.current = new AbortController()
 
     setLoading(true)
     setError('')
-    
+
     try {
       const response = await axiosInstance.get('/articles/search', {
         params: { query: searchQuery },
         signal: abortControllerRef.current.signal
       })
-      
       const articlesData = Array.isArray(response.data) ? response.data : []
       setResults(articlesData)
-      
       if (articlesData.length === 0 && searchQuery.trim()) {
         setError('No articles found matching your search.')
       }
     } catch (err) {
-      // Don't show error if request was aborted
-      if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') {
-        return
-      }
-      
+      if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') return
       const errorMessage = err.response?.data?.error || 'Failed to search articles'
       setError(errorMessage)
       toast.error(errorMessage, { autoClose: 5000 })
@@ -50,67 +41,62 @@ const SearchArticles = () => {
     }
   }
 
-  // Debounce effect: delays API call by 100ms after user stops typing
   useEffect(() => {
     if (!query.trim()) {
       setResults([])
       setError('')
       setLoading(false)
-      // Cancel any pending request
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
-      }
+      if (abortControllerRef.current) abortControllerRef.current.abort()
       return
     }
-
     const timer = setTimeout(() => {
       performSearch(query.trim())
-    }, 100)
+    }, 300)
 
     return () => {
       clearTimeout(timer)
-      // Cancel request if component unmounts or query changes before timeout
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
-      }
+      if (abortControllerRef.current) abortControllerRef.current.abort()
     }
   }, [query])
 
-
   return (
     <div className="w-full">
-      <div className="mb-6">
+      <div className="relative mb-8">
+        <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search articles by title..."
-          className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-lg"
+          placeholder="Search articles by title or content..."
+          className="input-field pl-12 text-lg"
           autoFocus
         />
         {loading && (
-          <div className="mt-2 text-gray-600 text-sm">Searching...</div>
+          <div className="absolute right-4 top-1/2 -translate-y-1/2">
+            <div className="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+          </div>
         )}
       </div>
 
       {error && !loading && (
-        <div className="text-center py-8 text-gray-600">
-          {error}
-        </div>
+        <div className="text-center py-12 text-stone-500">{error}</div>
       )}
 
       {!loading && !error && query.trim() && results.length === 0 && (
-        <div className="text-center py-8 text-gray-600">
-          No articles found matching "{query}"
+        <div className="text-center py-12 text-stone-500">
+          No articles found matching "<span className="font-medium text-stone-700">{query}</span>"
         </div>
       )}
 
       {!loading && results.length > 0 && (
         <div>
-          <div className="mb-4 text-sm text-gray-600">
+          <p className="text-sm text-stone-500 mb-4">
             Found {results.length} {results.length === 1 ? 'article' : 'articles'}
-          </div>
-          <div>
+          </p>
+          <div className="space-y-1">
             {results.map((article) => (
               <ArticleCard key={article.article_id || article._id} article={article} />
             ))}
@@ -119,8 +105,12 @@ const SearchArticles = () => {
       )}
 
       {!query.trim() && (
-        <div className="text-center py-8 text-gray-500">
-          Enter a search query to find articles
+        <div className="text-center py-16">
+          <svg className="w-16 h-16 text-stone-300 mx-auto mb-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <p className="text-stone-400">Enter a search query to find articles</p>
         </div>
       )}
     </div>
@@ -128,4 +118,3 @@ const SearchArticles = () => {
 }
 
 export default SearchArticles
-

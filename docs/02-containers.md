@@ -68,7 +68,7 @@ graph TD
 - HttpOnly cookie-based token storage
 - OpenAPI/Swagger documentation at `/api/docs`
 
-**Deployment**: Docker container, stateless (scalable horizontally)
+**Deployment**: Docker container, stateless
 
 ### Database (MongoDB)
 

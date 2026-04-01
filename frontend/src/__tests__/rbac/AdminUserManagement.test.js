@@ -115,10 +115,10 @@ describe('AdminUserManagement Component', () => {
     render(<AdminUserManagement />)
 
     // Wait for initial (empty) fetch.
-    expect(await screen.findByText(/no more users to load/i)).toBeInTheDocument()
+    expect(await screen.findByText(/No More Users/i)).toBeInTheDocument()
 
     // Click "Create New User"
-    fireEvent.click(screen.getByText(/create new user/i))
+    fireEvent.click(screen.getByText(/add user/i))
 
     // Fill out the form.
     fireEvent.change(screen.getByLabelText(/username/i), { target: { value: 'newUser' } })

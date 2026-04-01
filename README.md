@@ -1,116 +1,121 @@
-# Hive: Secure RBAC & Article Management System
+# Hive: RBAC & Article Management System
 
 ## Overview
 
-**Hive** is a technical demonstration of a secure, production-grade web application architecture. While functional as an article management platform, its primary purpose is to showcase advanced security implementations, Role-Based Access Control (RBAC), and scalable full-stack patterns.
+**Hive** is a full-stack web application for article management with Role-Based Access Control. Built as a learning/portfolio project to explore authentication patterns, layered architecture, and modern frontend tooling.
 
-Built with **Flask (Python)** and **React (Redux Toolkit)**, Hive implements industry best practices for authentication, session management, and secure data handling.
+Built with **Flask (Python)** backend and **React 19 (Redux Toolkit)** frontend, backed by **MongoDB**.
 
-## 🔐 Security & Architecture Highlights
+## Architecture
 
-This project prioritizes security and architectural rigor over feature quantity.
+### Backend (Flask)
+- **Layered architecture**: Routes -> Services -> Repositories (abstract base classes)
+- **JWT auth**: Access tokens (15min) + refresh tokens (7 days) in HttpOnly cookies
+- **RBAC**: Admin, Moderator, Regular roles with per-endpoint checks
+- **Input validation**: Pydantic schemas for all request payloads
+- **Rate limiting**: Configurable per-endpoint (auth: 5/min, write: 20/min)
+- **Security headers**: CSP, X-Frame-Options, X-Content-Type-Options
 
-### Authentication & Authorization
-- **Dual-Token System**: Short-lived JWT access tokens (15m) + long-lived refresh tokens (7 days).
-- **HttpOnly Cookies**: Tokens are stored in `HttpOnly`, `Secure`, `SameSite` cookies to prevent XSS.
-- **Role-Based Access Control (RBAC)**: Granular permissions for `Admin`, `Moderator`, and `Regular` users.
-- **Automatic Token Refresh**: Silent token rotation via Axios interceptors and proactive frontend logic.
-- **Session Management**: Multi-tab coordination, page visibility handling, and secure logout.
+### Frontend (React)
+- **Redux Toolkit** for auth state management
+- **Axios interceptors** for automatic token refresh
+- **Multi-tab session coordination** via localStorage events
+- **Protected routes** with role-based visibility
+- **Tailwind CSS** with custom design system (amber/honey brand colors)
 
-### Backend Security (Flask)
-- **Input Validation**: Strict Pydantic schemas for all request payloads.
-- **Security Headers**: Automated `Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options`.
-- **Rate Limiting**: Configurable rate limits per endpoint (e.g., strict limits on auth routes).
-- **Error Handling**: Centralized error handlers with consistent, safe response formats (no leaking internals).
-- **Clean Architecture**: Strict separation of concerns (Routes → Services → Repositories).
+## Features
 
-### Frontend Architecture (React)
-- **Redux Toolkit**: Centralized, predictable state management for auth and user sessions.
-- **Protected Routes**: High-order components for role-based route protection.
-- **Security-First UI**: UI elements (buttons, links) adapt visibility based on user permissions.
-- **Robust Error Boundaries**: Graceful degradation and error logging.
+- User registration, login, logout with secure token handling
+- Admin dashboard: user management (create, edit roles, delete)
+- Article CRUD with author/role-based permissions
+- Search articles by title and content
+- Paginated lists with bounds validation
 
----
+## Quick Start (Docker)
 
-## Implemented Features
+```bash
+# 1. Configure environment
+cp env.docker.example .env
+# Edit .env — set SECRET_KEY, JWT_SECRET_KEY, MONGO_ROOT_PASSWORD
 
-### 🛡️ Security & Admin
-- **User Registration & Auth**: Secure flows with validation and duplicate checks.
-- **Admin Dashboard**: User management (List, Promote/Demote, Delete) protected by RBAC.
-- **Profile Management**: Secure viewing of user details and role status.
+# 2. Run
+docker-compose up --build -d
 
-### 📝 Article Domain (Demo Context)
-- **CRUD Operations**: Create, Read, Update, Delete articles (with permission checks).
-- **Real-time Search**: Regex-based search for article titles.
-- **Pagination**: Backend-enforced pagination for performance.
+# 3. Access
+# Frontend: http://localhost:3000
+# API:      http://localhost:5000
+# Health:   http://localhost:5000/health
+# Swagger:  http://localhost:5000/api/docs
+```
 
----
+## Local Development
 
-## Setup Instructions
+### Backend
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp env.example .env  # edit with your values
+python app.py
+```
 
-### Prerequisites
-- Python 3.8+
-- Node.js 16+
-- Docker & Docker Compose (recommended)
-
-### Quick Start (Docker)
-
-1. **Configure Environment**:
-   ```bash
-   cp env.docker.example .env
-   cp backend/env.example backend/.env
-   ```
-   *Edit `.env` files to set secure secrets (SECRET_KEY, MONGO passwords).*
-
-2. **Run with Docker Compose**:
-   ```bash
-   docker-compose up --build
-   ```
-
-3. **Access Application**:
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:5000
-   - Swagger Docs: http://localhost:5000/api/docs
-
-### Local Development
-
-See `backend/README.md` and `frontend/README.md` for detailed local setup instructions.
-
----
+### Frontend
+```bash
+cd frontend
+npm install
+npm start
+```
 
 ## Testing
 
-Hive maintains comprehensive test suites for both backend and frontend to ensure reliability and regression prevention.
-
-### Backend Tests (Unittest)
+### Backend (63 tests, pytest)
 ```bash
 cd backend
-# Run all tests with coverage
-coverage run --source=. -m unittest discover -s __tests__ --failfast
-coverage report -m
+source .venv/bin/activate
+python -m pytest __tests__/ -v
 ```
 
-### Frontend Tests (Jest + RTL)
+### Frontend (78 tests, Jest + React Testing Library)
 ```bash
 cd frontend
-npm test
-# or run with coverage
-npm run test:coverage
+npx jest --watchAll=false --verbose
+# With coverage:
+npx jest --watchAll=false --coverage
 ```
 
----
+## Tech Stack
 
-## Technology Stack
+| Layer | Technologies |
+|-------|-------------|
+| Backend | Python 3.11, Flask, PyMongo, Pydantic, PyJWT, Bcrypt, Gunicorn |
+| Frontend | React 19, Redux Toolkit, React Router v7, Axios, Tailwind CSS |
+| Database | MongoDB 7.0 |
+| Infra | Docker, Docker Compose, Nginx |
+| Testing | Pytest, Jest, React Testing Library, Cypress |
 
-| Component | Tech Stack |
-|-----------|------------|
-| **Backend** | Python 3.11, Flask, PyMongo, Pydantic, JWT-Extended, Bcrypt |
-| **Frontend** | React 19, Redux Toolkit, React Router v7, Axios, Tailwind CSS |
-| **Database** | MongoDB (NoSQL) |
-| **Infra** | Docker, Docker Compose |
-| **Testing** | Unittest, Jest, React Testing Library, Cypress |
+## Project Structure
 
----
+```
+hive/
+├── backend/
+│   ├── app/              # Flask app factory, config, routes, schemas
+│   ├── services/         # Business logic
+│   ├── repositories/     # Data access (abstract + MongoDB impl)
+│   ├── utilities/        # Auth, logging, decorators
+│   ├── __tests__/        # Backend tests (article/ + user/)
+│   └── wsgi.py           # Gunicorn entry point
+├── frontend/
+│   ├── src/
+│   │   ├── api/          # Axios instance with interceptors
+│   │   ├── components/   # ArticleCard, Navbar, SessionManager, etc.
+│   │   ├── pages/        # Login, Register, Articles, Admin, etc.
+│   │   ├── redux/        # Store + authSlice
+│   │   └── hooks/        # useTokenRefresh
+│   └── cypress/          # E2E tests
+├── docs/                 # C4 model architecture docs
+└── docker-compose.yml
+```
 
 ## License
 

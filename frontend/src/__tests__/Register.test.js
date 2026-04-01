@@ -64,9 +64,9 @@ describe('Register Component', () => {
 
     const usernameInput = screen.getByPlaceholderText(/username/i)
     const emailInput = screen.getByPlaceholderText(/email/i)
-    const passwordInput = screen.getByPlaceholderText(/^password$/i)
+    const passwordInput = screen.getByPlaceholderText('Create a password')
     const confirmPasswordInput = screen.getByPlaceholderText('Confirm Password')
-    const registerButton = screen.getByRole('button', { name: /register/i })
+    const registerButton = screen.getByRole('button', { name: /create account/i })
 
     fireEvent.change(usernameInput, { target: { value: 'newUser' } })
     fireEvent.change(emailInput, { target: { value: 'newuser@example.com' } })
@@ -89,9 +89,9 @@ describe('Register Component', () => {
 
     const usernameInput = screen.getByPlaceholderText(/username/i)
     const emailInput = screen.getByPlaceholderText(/email/i)
-    const passwordInput = screen.getByPlaceholderText(/^password$/i)
+    const passwordInput = screen.getByPlaceholderText('Create a password')
     const confirmPasswordInput = screen.getByPlaceholderText('Confirm Password')
-    const registerButton = screen.getByRole('button', { name: /register/i })
+    const registerButton = screen.getByRole('button', { name: /create account/i })
 
     fireEvent.change(usernameInput, { target: { value: 'existingUser' } })
     fireEvent.change(emailInput, { target: { value: 'existing@example.com' } })
@@ -102,5 +102,22 @@ describe('Register Component', () => {
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('A user with this username or email already exists.')
     })
+  })
+
+  test('shows error when passwords do not match', async () => {
+    axiosInstance.post.mockClear()
+    renderWithProviders(<Register />)
+
+    fireEvent.change(screen.getByPlaceholderText(/username/i), { target: { value: 'newUser' } })
+    fireEvent.change(screen.getByPlaceholderText(/email/i), { target: { value: 'new@example.com' } })
+    fireEvent.change(screen.getByPlaceholderText('Create a password'), { target: { value: 'password123' } })
+    fireEvent.change(screen.getByPlaceholderText('Confirm Password'), { target: { value: 'differentpassword' } })
+    fireEvent.click(screen.getByRole('button', { name: /create account/i }))
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Passwords do not match')
+    })
+    // Should NOT call the API for THIS test
+    expect(axiosInstance.post).not.toHaveBeenCalled()
   })
 })

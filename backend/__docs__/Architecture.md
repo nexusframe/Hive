@@ -112,7 +112,7 @@ Refer to the diagrams in the `__docs__/diagrams/` folder for visual representati
 - **Integration Testing:**  
   Endpoints are tested end-to-end using Flask’s test client.
 - **Testing Approach:**  
-  Comprehensive test suites are maintained to ensure reliability and regression prevention. All new tests reside under the `__tests__` directory.
+  Test suites reside under the `__tests__` directory, covering article and user domains.
 - **Coverage:**  
   Test coverage reports are generated using `coverage.py` to ensure that most of the codebase is tested.
 
@@ -126,4 +126,4 @@ Refer to the diagrams in the `__docs__/diagrams/` folder for visual representati
 
 ## 11. Conclusion
 
-This architecture is designed to be modular, maintainable, and scalable. By following established design patterns and separating concerns across different layers, the Hive backend is well-prepared to handle future requirements and enhancements.
+The architecture separates concerns across routes, services, and repositories, making the codebase easier to test and extend.

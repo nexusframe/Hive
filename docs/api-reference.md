@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides comprehensive details on the Hive API endpoints, request/response structures, error codes, and authentication mechanisms.
+API endpoints, request/response structures, error codes, and authentication.
 
 **Base URL**: `/api`  
 **API Documentation**: Swagger UI available at `/api/docs`  
