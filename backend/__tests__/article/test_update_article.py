@@ -16,6 +16,7 @@ from bson import ObjectId
 from app import create_app
 from app.config import Config
 from pymongo import MongoClient
+from utilities.constants import Roles
 
 class TestUpdateArticle(unittest.TestCase):
 
@@ -32,10 +33,10 @@ class TestUpdateArticle(unittest.TestCase):
 
         # Register users
         cls.client.post("/api/register", json={"username": "moduser", "email": "mod@example.com", "password": "password123"})
-        cls.test_db.users.update_one({"username": "moduser"}, {"$set": {"role": "moderator"}})
+        cls.test_db.users.update_one({"username": "moduser"}, {"$set": {"role": Roles.MODERATOR}})
 
         cls.client.post("/api/register", json={"username": "adminuser", "email": "admin@example.com", "password": "password123"})
-        cls.test_db.users.update_one({"username": "adminuser"}, {"$set": {"role": "admin"}})
+        cls.test_db.users.update_one({"username": "adminuser"}, {"$set": {"role": Roles.ADMIN}})
 
         cls.client.post("/api/register", json={"username": "authoruser", "email": "author@example.com", "password": "password123"})
         cls.client.post("/api/register", json={"username": "regularuser", "email": "regular@example.com", "password": "password123"})

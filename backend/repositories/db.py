@@ -32,3 +32,12 @@ def get_db():
     if _db is None:
         init_db()
     return _db
+
+def close_db():
+    """Close the MongoDB connection."""
+    global _mongo_client, _db
+    if _mongo_client is not None:
+        _mongo_client.close()
+        logger.info("MongoDB connection closed")
+        _mongo_client = None
+        _db = None

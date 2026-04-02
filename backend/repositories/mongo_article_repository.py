@@ -28,7 +28,7 @@ class MongoArticleRepository(BaseArticleRepository):
             )
             raise RepositoryError(f"Error creating article: {str(e)}") from e
 
-    def get_all_articles(self, skip=0, limit=2):
+    def get_all_articles(self, skip=0, limit=10):
         try:
             cursor = self.articles.find({}).sort("_id", 1).skip(skip).limit(limit)
             articles = []

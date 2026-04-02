@@ -20,6 +20,7 @@ import pytest
 from app import create_app
 from app.config import Config
 from pymongo import MongoClient
+from utilities.constants import Roles
 
 
 @pytest.fixture(scope="session")
@@ -54,13 +55,13 @@ def clean_db(test_db):
 @pytest.fixture(scope="session")
 def register_user(client, test_db):
     """Returns a helper function to register a user with a given role."""
-    def _register(username, email, password="password123", role="regular"):
+    def _register(username, email, password="password123", role=Roles.REGULAR):
         client.post("/api/register", json={
             "username": username,
             "email": email,
             "password": password,
         })
-        if role != "regular":
+        if role != Roles.REGULAR:
             test_db.users.update_one({"username": username}, {"$set": {"role": role}})
         return username
     return _register

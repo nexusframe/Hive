@@ -2,7 +2,7 @@
 References: backend/__docs__/useCases/article/UseCase_ListArticles.md
 
 Test Scenarios:
-1. Default pagination (limit=2) returns 2 articles
+1. Default pagination (limit=10) returns all articles when count < limit
 2. Custom pagination (page=2, limit=2) returns correct articles
 3. Invalid pagination params -> 400
 4. Page beyond data -> empty list
@@ -37,11 +37,11 @@ class TestListArticles(unittest.TestCase):
         cls.test_db.articles.insert_many(articles)
 
     def test_list_articles_default(self):
-        """Default pagination returns limit=2 articles."""
+        """Default pagination returns up to 10 articles (5 exist)."""
         resp = self.client.get("/api/articles")
         self.assertEqual(resp.status_code, 200)
         data = resp.get_json()
-        self.assertEqual(len(data), 2)
+        self.assertEqual(len(data), 5)
         for article in data:
             self.assertIn("article_id", article)
             self.assertIn("title", article)

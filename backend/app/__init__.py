@@ -48,6 +48,8 @@ def create_app():
         return response
 
     def shutdown_handler(signum, _):
+        from repositories.db import close_db
+        close_db()
         app.logger.info("Shutdown initiated...", extra={"extra_data": {"signal": signum}})
         sys.exit(0)
 

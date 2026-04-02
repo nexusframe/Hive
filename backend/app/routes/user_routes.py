@@ -8,6 +8,7 @@ from app.config import Config
 from app.schemas import UserRegisterSchema, UserLoginSchema, UserUpdateSchema
 from utilities.decorators import validate_request
 from utilities.auth_utils import set_auth_cookies, delete_auth_cookies
+from utilities.constants import Roles
 from app.extensions import limiter
 
 user_routes = Blueprint("user_routes", __name__)
@@ -110,7 +111,7 @@ def protected():
 @validate_request(UserRegisterSchema)
 def create_user_admin(validated_data):
     claims = get_jwt()
-    if claims.get("role", "").lower() != "admin":
+    if claims.get("role", "").lower() != Roles.ADMIN:
         return jsonify({"error": "User not authorized to create users", "message": "User not authorized to create users"}), 403
     result = user_service.register_user(
         validated_data["username"], validated_data["email"], validated_data["password"]
@@ -129,7 +130,7 @@ def update_user(user_id, validated_data):
     if not validated_data or (isinstance(validated_data, dict) and len(validated_data) == 0):
         return jsonify({"error": "No update data provided", "message": "No update data provided"}), 400
     claims = get_jwt()
-    if claims.get("role", "").lower() != "admin":
+    if claims.get("role", "").lower() != Roles.ADMIN:
         return jsonify({"error": "User not authorized to update users", "message": "User not authorized to update users"}), 403
     result = user_service.update_user(user_id, validated_data)
     return jsonify(result), 200
@@ -142,7 +143,7 @@ def delete_user(user_id):
     except Exception:
         return jsonify({"error": "Invalid user id format", "message": "Invalid user id format"}), 400
     claims = get_jwt()
-    if claims.get("role", "").lower() != "admin":
+    if claims.get("role", "").lower() != Roles.ADMIN:
         return jsonify({"error": "User not authorized to delete users", "message": "User not authorized to delete users"}), 403
     result = user_service.delete_user(user_id)
     return jsonify(result), 200
@@ -152,7 +153,7 @@ def delete_user(user_id):
 @jwt_required()
 def list_users():
     claims = get_jwt()
-    if claims.get("role", "").lower() != "admin":
+    if claims.get("role", "").lower() != Roles.ADMIN:
         return jsonify({"error": "User not authorized to view users", "message": "User not authorized to view users"}), 403
     try:
         page = int(request.args.get("page", 1))

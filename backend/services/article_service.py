@@ -30,7 +30,7 @@ class ArticleService:
         )
         return {"message": "Article created successfully", "article_id": article_id}
 
-    def get_all_articles(self, page=1, limit=2):
+    def get_all_articles(self, page=1, limit=10):
         skip = (page - 1) * limit
         articles = self.repo.get_all_articles(skip=skip, limit=limit)
         logger.info(
@@ -49,9 +49,9 @@ class ArticleService:
 
     def update_article(self, article_id, title=None, content=None):
         update_data = {}
-        if title:
+        if title is not None:
             update_data["title"] = title
-        if content:
+        if content is not None:
             update_data["content"] = content
         if not update_data:
             raise ValidationError("No data provided for update")

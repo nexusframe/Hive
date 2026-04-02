@@ -6,6 +6,7 @@ import jwt
 from utilities.logger import get_logger
 from repositories.mongo_user_repository import MongoUserRepository
 from utilities.custom_exceptions import UserNotFoundError, UnauthorizedError, ValidationError
+from utilities.constants import Roles
 
 logger = get_logger(__name__)
 
@@ -18,7 +19,7 @@ class UserService:
         self.repo = repository if repository is not None else MongoUserRepository()
         logger.info("UserService initialized", extra={"jwt_algorithm": self.jwt_algorithm})
 
-    def register_user(self, username, email, password, role="regular"):
+    def register_user(self, username, email, password, role=Roles.REGULAR):
         if not username or not username.strip():
             raise ValidationError("Username is required")
         if not email or not email.strip():
@@ -57,6 +58,8 @@ class UserService:
         else:
             user = self.repo.find_by_username(username_or_email)
         if not user:
+            # Constant-time: always run bcrypt to prevent timing-based user enumeration
+            bcrypt.checkpw(password.encode("utf-8"), b'$2b$12$VZ3FfziFehuHvJcpoBtMSehXXHumOJeXtixBNToojmDGNcX7VQ.GG')
             logger.warning("Login attempt for non-existent user", extra={"username_or_email": username_or_email})
             raise UnauthorizedError("Invalid credentials")
         if not bcrypt.checkpw(password.encode("utf-8"), user["password"]):
@@ -100,7 +103,7 @@ class UserService:
                 refresh_token,
                 options={"verify_signature": False, "verify_exp": False}
             )
-        except Exception as e:
+        except (jwt.DecodeError, jwt.InvalidTokenError, ValueError) as e:
             logger.error("Error decoding refresh token", extra={"error": str(e)})
             raise UnauthorizedError("Invalid refresh token")
         if "sub" not in unverified_payload or "exp" not in unverified_payload:

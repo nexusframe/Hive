@@ -28,6 +28,7 @@ frontend/.env
 .vscode/
 .idea/
 .cursor/
+.claude
 .cursorrules
 CLAUDE.md
 

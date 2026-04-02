@@ -14,6 +14,7 @@ import json
 from app import create_app
 from app.config import Config
 from pymongo import MongoClient
+from utilities.constants import Roles
 
 class TestListUsers(unittest.TestCase):
 
@@ -32,10 +33,10 @@ class TestListUsers(unittest.TestCase):
             "username": "adminuser",
             "email": "admin@example.com",
             "password": "adminpass",
-            "role": "admin"
+            "role": Roles.ADMIN
         }
         admin_reg_resp = cls.client.post("/api/register", json=admin_data)
-        cls.test_db.users.update_one({"username": "adminuser"}, {"$set": {"role": "admin"}})
+        cls.test_db.users.update_one({"username": "adminuser"}, {"$set": {"role": Roles.ADMIN}})
         login_resp = cls.client.post(
             "/api/login",
             json={"username_or_email": "admin@example.com", "password": "adminpass"}
