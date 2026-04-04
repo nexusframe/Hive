@@ -50,7 +50,7 @@ def create_article(validated_data):
 def get_article(article_id):
     try:
         ObjectId(article_id)
-    except (InvalidId, Exception):
+    except (InvalidId, TypeError):
         return jsonify({"error": "Invalid article id format", "message": "Invalid article id format"}), 400
     result = current_app.article_service.get_article_by_id(article_id)
     # Rename _id to article_id in the response
@@ -65,7 +65,7 @@ def get_article(article_id):
 def update_article(article_id, validated_data):
     try:
         ObjectId(article_id)
-    except (InvalidId, Exception):
+    except (InvalidId, TypeError):
         return jsonify({"error": "Invalid article id format", "message": "Invalid article id format"}), 400
     # Retrieve the JWT claims and identity
     claims = get_jwt()
@@ -94,7 +94,7 @@ def update_article(article_id, validated_data):
 def delete_article(article_id):
     try:
         ObjectId(article_id)
-    except (InvalidId, Exception):
+    except (InvalidId, TypeError):
         return jsonify({"error": "Invalid article id format", "message": "Invalid article id format"}), 400
     # Retrieve the JWT claims and identity
     claims = get_jwt()

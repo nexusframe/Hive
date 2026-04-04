@@ -3,6 +3,7 @@ import jwt
 from flask import Blueprint, request, jsonify, make_response, current_app
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 from bson import ObjectId
+from bson.errors import InvalidId
 from services.user_service import UserService
 from app.config import Config
 from app.schemas import UserRegisterSchema, UserLoginSchema, UserUpdateSchema
@@ -124,7 +125,7 @@ def create_user_admin(validated_data):
 def update_user(user_id, validated_data):
     try:
         ObjectId(user_id)
-    except Exception:
+    except (InvalidId, TypeError):
         return jsonify({"error": "Invalid user id format", "message": "Invalid user id format"}), 400
     # Check if validated_data is empty (all fields are optional, so empty dict means no update data)
     if not validated_data or (isinstance(validated_data, dict) and len(validated_data) == 0):
@@ -140,7 +141,7 @@ def update_user(user_id, validated_data):
 def delete_user(user_id):
     try:
         ObjectId(user_id)
-    except Exception:
+    except (InvalidId, TypeError):
         return jsonify({"error": "Invalid user id format", "message": "Invalid user id format"}), 400
     claims = get_jwt()
     if claims.get("role", "").lower() != Roles.ADMIN:
