@@ -83,7 +83,7 @@ class TestCreateArticle(unittest.TestCase):
         """Request without auth token should return 401."""
         self.client.delete_cookie("access_token", domain="localhost")
         resp = self.client.post("/api/articles", json={"title": "No auth", "content": "No auth content"})
-        self.assertIn(resp.status_code, [401, 422])
+        self.assertEqual(resp.status_code, 401)
 
     @classmethod
     def tearDownClass(cls):

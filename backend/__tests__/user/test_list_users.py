@@ -58,7 +58,7 @@ class TestListUsers(unittest.TestCase):
             }
             resp = cls.client.post("/api/users", json=user_data)
             if resp.status_code != 201:
-                print(f"DEBUG: Failed to create user{i}: status {resp.status_code} - {resp.get_data(as_text=True)}")
+                raise AssertionError(f"Failed to create user{i}: status {resp.status_code} - {resp.get_data(as_text=True)}")
 
     def test_list_users_default_pagination(self):
         # Assume default page = 1 and default size = 10.
