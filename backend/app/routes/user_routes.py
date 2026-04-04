@@ -113,7 +113,7 @@ def protected():
 def create_user_admin(validated_data):
     claims = get_jwt()
     if claims.get("role", "").lower() != Roles.ADMIN:
-        return jsonify({"error": "User not authorized to create users", "message": "User not authorized to create users"}), 403
+        return jsonify({"error": "User not authorized to create users"}), 403
     result = user_service.register_user(
         validated_data["username"], validated_data["email"], validated_data["password"]
     )
@@ -126,13 +126,13 @@ def update_user(user_id, validated_data):
     try:
         ObjectId(user_id)
     except (InvalidId, TypeError):
-        return jsonify({"error": "Invalid user id format", "message": "Invalid user id format"}), 400
+        return jsonify({"error": "Invalid user id format"}), 400
     # Check if validated_data is empty (all fields are optional, so empty dict means no update data)
     if not validated_data or (isinstance(validated_data, dict) and len(validated_data) == 0):
-        return jsonify({"error": "No update data provided", "message": "No update data provided"}), 400
+        return jsonify({"error": "No update data provided"}), 400
     claims = get_jwt()
     if claims.get("role", "").lower() != Roles.ADMIN:
-        return jsonify({"error": "User not authorized to update users", "message": "User not authorized to update users"}), 403
+        return jsonify({"error": "User not authorized to update users"}), 403
     result = user_service.update_user(user_id, validated_data)
     return jsonify(result), 200
 
@@ -142,10 +142,10 @@ def delete_user(user_id):
     try:
         ObjectId(user_id)
     except (InvalidId, TypeError):
-        return jsonify({"error": "Invalid user id format", "message": "Invalid user id format"}), 400
+        return jsonify({"error": "Invalid user id format"}), 400
     claims = get_jwt()
     if claims.get("role", "").lower() != Roles.ADMIN:
-        return jsonify({"error": "User not authorized to delete users", "message": "User not authorized to delete users"}), 403
+        return jsonify({"error": "User not authorized to delete users"}), 403
     result = user_service.delete_user(user_id)
     return jsonify(result), 200
 
@@ -155,7 +155,7 @@ def delete_user(user_id):
 def list_users():
     claims = get_jwt()
     if claims.get("role", "").lower() != Roles.ADMIN:
-        return jsonify({"error": "User not authorized to view users", "message": "User not authorized to view users"}), 403
+        return jsonify({"error": "User not authorized to view users"}), 403
     try:
         page = int(request.args.get("page", 1))
         size = int(request.args.get("size", 10))

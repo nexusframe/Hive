@@ -37,7 +37,7 @@ def create_article(validated_data):
 
     # Only allow moderators and admins to create articles
     if user_role not in Roles.PRIVILEGED:
-        return jsonify({"error": "User not authorized to create articles", "message": "User not authorized to create articles"}), 403
+        return jsonify({"error": "User not authorized to create articles"}), 403
 
     # Use the current user's identity (username) as the author
     author = get_jwt_identity()
@@ -51,7 +51,7 @@ def get_article(article_id):
     try:
         ObjectId(article_id)
     except (InvalidId, TypeError):
-        return jsonify({"error": "Invalid article id format", "message": "Invalid article id format"}), 400
+        return jsonify({"error": "Invalid article id format"}), 400
     result = current_app.article_service.get_article_by_id(article_id)
     # Rename _id to article_id in the response
     if "_id" in result:
@@ -66,7 +66,7 @@ def update_article(article_id, validated_data):
     try:
         ObjectId(article_id)
     except (InvalidId, TypeError):
-        return jsonify({"error": "Invalid article id format", "message": "Invalid article id format"}), 400
+        return jsonify({"error": "Invalid article id format"}), 400
     # Retrieve the JWT claims and identity
     claims = get_jwt()
     user_role = claims.get("role", Roles.REGULAR)
@@ -78,11 +78,11 @@ def update_article(article_id, validated_data):
     # Check authorization: admin/moderator can update any article, author can update their own
     article_author = article.get("author")
     if user_role not in Roles.PRIVILEGED and username != article_author:
-        return jsonify({"error": "User not authorized to update this article", "message": "User not authorized to update this article"}), 403
+        return jsonify({"error": "User not authorized to update this article"}), 403
     
     # Check if validated_data is empty (all fields are optional, so empty dict means no update data)
     if not validated_data or (isinstance(validated_data, dict) and len(validated_data) == 0):
-        return jsonify({"error": "No data provided for update", "message": "No data provided for update"}), 400
+        return jsonify({"error": "No data provided for update"}), 400
     result = current_app.article_service.update_article(
         article_id, title=validated_data.get("title"), content=validated_data.get("content")
     )
@@ -95,7 +95,7 @@ def delete_article(article_id):
     try:
         ObjectId(article_id)
     except (InvalidId, TypeError):
-        return jsonify({"error": "Invalid article id format", "message": "Invalid article id format"}), 400
+        return jsonify({"error": "Invalid article id format"}), 400
     # Retrieve the JWT claims and identity
     claims = get_jwt()
     user_role = claims.get("role", Roles.REGULAR)
@@ -107,7 +107,7 @@ def delete_article(article_id):
     # Check authorization: admin/moderator can delete any article, author can delete their own
     article_author = article.get("author")
     if user_role not in Roles.PRIVILEGED and username != article_author:
-        return jsonify({"error": "User not authorized to delete this article", "message": "User not authorized to delete this article"}), 403
+        return jsonify({"error": "User not authorized to delete this article"}), 403
     
     result = current_app.article_service.delete_article(article_id)
     return jsonify(result), 200

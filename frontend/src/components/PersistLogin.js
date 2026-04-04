@@ -3,8 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { Outlet, Navigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { refreshUser } from '../redux/slices/authSlice'
-
-const IS_DEVELOPMENT = process.env.NODE_ENV === 'development'
+import { IS_DEVELOPMENT } from '../config'
 
 const PersistLogin = () => {
   const dispatch = useDispatch()
