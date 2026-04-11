@@ -64,7 +64,7 @@ describe('ProtectedRoute', () => {
     // Then verify profile content is displayed - use heading for Profile and check username
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
-      expect(screen.getByText(/testUser/i)).toBeInTheDocument()
+      expect(screen.getAllByText(/testUser/i).length).toBeGreaterThan(0)
     }, { timeout: 3000 })
   })
 

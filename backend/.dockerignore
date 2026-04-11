@@ -1,0 +1,12 @@
+.env*
+.venv*
+__pycache__
+*.pyc
+__tests__
+__docs__
+coverage
+.git
+.gitignore
+*.md
+node_modules
+lint.ps1

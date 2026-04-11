@@ -55,7 +55,7 @@ describe('Navbar Component', () => {
       </Provider>
     )
 
-    expect(screen.getByText(/profile/i)).toBeInTheDocument()
+    expect(screen.getByText('testUser')).toBeInTheDocument()
     expect(screen.getByText(/logout/i)).toBeInTheDocument()
   })
 

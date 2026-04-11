@@ -3,8 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { Outlet, Navigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { refreshUser } from '../redux/slices/authSlice'
-
-const IS_DEVELOPMENT = process.env.NODE_ENV === 'development'
+import { IS_DEVELOPMENT } from '../config'
 
 const PersistLogin = () => {
   const dispatch = useDispatch()
@@ -51,7 +50,12 @@ const PersistLogin = () => {
 
   // While waiting for refreshUser to complete, display a loading indicator.
   if (!persistDone) {
-    return <div>Loading...</div>
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-3">
+        <div className="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin" />
+        <span className="text-stone-500 text-sm">Restoring session...</span>
+      </div>
+    )
   }
 
   // If persist is done and there's no user, redirect to login immediately.

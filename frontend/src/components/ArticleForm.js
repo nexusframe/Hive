@@ -16,7 +16,6 @@ const ArticleForm = ({ initialData, onSubmit, submitLabel, isLoading, onCancel }
 
   const validate = () => {
     const newErrors = {}
-    
     if (!title.trim()) {
       newErrors.title = 'Title is required'
     } else if (title.trim().length < 3) {
@@ -24,13 +23,11 @@ const ArticleForm = ({ initialData, onSubmit, submitLabel, isLoading, onCancel }
     } else if (title.length > 200) {
       newErrors.title = 'Title must be less than 200 characters'
     }
-    
     if (!content.trim()) {
       newErrors.content = 'Content is required'
     } else if (content.trim().length < 10) {
       newErrors.content = 'Content must be at least 10 characters'
     }
-    
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -38,11 +35,7 @@ const ArticleForm = ({ initialData, onSubmit, submitLabel, isLoading, onCancel }
   const handleSubmit = async (e) => {
     e.preventDefault()
     e.stopPropagation()
-    
-    if (!validate()) {
-      return
-    }
-    
+    if (!validate()) return
     try {
       await onSubmit(title.trim(), content.trim())
     } catch (error) {
@@ -56,74 +49,74 @@ const ArticleForm = ({ initialData, onSubmit, submitLabel, isLoading, onCancel }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 p-4 border rounded max-w-3xl">
-      <div className="mb-4">
-        <label htmlFor="title" className="block mb-1 font-medium">
-          Title
-        </label>
-        <input
-          id="title"
-          type="text"
-          value={title}
-          onChange={(e) => {
-            setTitle(e.target.value)
-            if (errors.title) {
-              setErrors({ ...errors, title: '' })
-            }
-          }}
-          className={`border p-2 w-full ${errors.title ? 'border-red-500' : ''}`}
-          disabled={isLoading}
-          maxLength={200}
-        />
-        {errors.title && (
-          <div className="text-red-600 text-sm mt-1">{errors.title}</div>
-        )}
-      </div>
-
-      <div className="mb-4">
-        <label htmlFor="content" className="block mb-1 font-medium">
-          Content
-        </label>
-        <textarea
-          id="content"
-          value={content}
-          onChange={(e) => {
-            setContent(e.target.value)
-            if (errors.content) {
-              setErrors({ ...errors, content: '' })
-            }
-          }}
-          rows={12}
-          className={`border p-2 w-full ${errors.content ? 'border-red-500' : ''}`}
-          disabled={isLoading}
-        />
-        {errors.content && (
-          <div className="text-red-600 text-sm mt-1">{errors.content}</div>
-        )}
-      </div>
-
-      <div className="flex space-x-2 mt-4">
-        <AsyncButton
-          type="button"
-          initialLabel={submitLabel || 'Submit'}
-          loadingLabel="Submitting..."
-          onClick={handleButtonClick}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
-        />
-        {onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+    <form onSubmit={handleSubmit} className="card p-6 max-w-3xl">
+      <div className="space-y-6">
+        <div>
+          <label htmlFor="title" className="block text-sm font-medium text-stone-700 mb-1.5">
+            Title
+          </label>
+          <input
+            id="title"
+            type="text"
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value)
+              if (errors.title) setErrors({ ...errors, title: '' })
+            }}
+            className={`input-field ${errors.title ? 'border-red-400 focus:ring-red-500/30 focus:border-red-500' : ''}`}
             disabled={isLoading}
-          >
-            Cancel
-          </button>
-        )}
+            maxLength={200}
+            placeholder="Enter article title"
+          />
+          {errors.title && (
+            <p className="text-red-500 text-sm mt-1.5">{errors.title}</p>
+          )}
+          <p className="text-stone-400 text-xs mt-1">{title.length}/200</p>
+        </div>
+
+        <div>
+          <label htmlFor="content" className="block text-sm font-medium text-stone-700 mb-1.5">
+            Content
+          </label>
+          <textarea
+            id="content"
+            value={content}
+            onChange={(e) => {
+              setContent(e.target.value)
+              if (errors.content) setErrors({ ...errors, content: '' })
+            }}
+            rows={14}
+            className={`input-field resize-y min-h-[200px] ${errors.content ? 'border-red-400 focus:ring-red-500/30 focus:border-red-500' : ''}`}
+            disabled={isLoading}
+            placeholder="Write your article content..."
+          />
+          {errors.content && (
+            <p className="text-red-500 text-sm mt-1.5">{errors.content}</p>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3 pt-2">
+          <AsyncButton
+            type="button"
+            initialLabel={submitLabel || 'Publish'}
+            loadingLabel="Publishing..."
+            onClick={handleButtonClick}
+            className="btn-primary"
+          />
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="btn-secondary"
+              disabled={isLoading}
+            >
+              Cancel
+            </button>
+          )}
+        </div>
       </div>
     </form>
   )
 }
 
 export default ArticleForm
-

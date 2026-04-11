@@ -2,45 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* Keyframes for animating the SVG shapes */
-@keyframes shapeColorShift {
-  0% {
-    fill: #fdd835;
-    transform: translate(0, 0) scale(1);
-  }
-  50% {
-    fill: #66bb6a;
-    transform: translate(10px, -10px) scale(1.05);
-  }
-  100% {
-    fill: #fdd835;
-    transform: translate(0, 0) scale(1);
+@layer base {
+  body {
+    @apply bg-surface-50 text-stone-800 font-sans antialiased;
+    margin: 0;
+    min-height: 100vh;
   }
 }
 
-@keyframes shapeColorShift2 {
-  0% {
-    fill: #8d6e63;
-    transform: translate(0, 0) scale(1);
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-500 text-white font-medium rounded-lg
+           hover:bg-brand-600 active:bg-brand-700 transition-all duration-200
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
-  50% {
-    fill: #fbc02d;
-    transform: translate(-10px, 10px) scale(0.95);
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-stone-100 text-stone-700 font-medium rounded-lg
+           hover:bg-stone-200 active:bg-stone-300 transition-all duration-200 border border-stone-200
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
-  100% {
-    fill: #8d6e63;
-    transform: translate(0, 0) scale(1);
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-red-500 text-white font-medium rounded-lg
+           hover:bg-red-600 active:bg-red-700 transition-all duration-200
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
-}
-
-/* Ensure the body is set to full height */
-body {
-  margin: 0;
-  min-height: 100vh;
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-stone-600 font-medium rounded-lg
+           hover:bg-stone-100 active:bg-stone-200 transition-all duration-200;
+  }
+  .input-field {
+    @apply w-full px-4 py-3 bg-white border border-stone-200 rounded-lg text-stone-800
+           placeholder:text-stone-400 transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500
+           disabled:bg-stone-50 disabled:text-stone-400;
+  }
+  .card {
+    @apply bg-white rounded-xl border border-stone-200/60 shadow-sm;
+  }
+  .card-hover {
+    @apply bg-white rounded-xl border border-stone-200/60 shadow-sm hover:shadow-md hover:border-brand-200 transition-all duration-300;
+  }
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  .badge-admin {
+    @apply badge bg-purple-100 text-purple-700;
+  }
+  .badge-moderator {
+    @apply badge bg-blue-100 text-blue-700;
+  }
+  .badge-regular {
+    @apply badge bg-stone-100 text-stone-600;
+  }
 }

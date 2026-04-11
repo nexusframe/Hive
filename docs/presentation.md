@@ -120,8 +120,8 @@ components/ | hooks/ | pages/ | api/ | redux/
 1. **Zrozumienie bezpieczeństwa**: JWT, HttpOnly cookies, RBAC, rate limiting
 2. **Architektura**: Clean Architecture, SOLID, separation of concerns
 3. **Full-stack**: Backend (Flask) + Frontend (React) + Database (MongoDB)
-4. **Jakość**: Comprehensive testing, type safety
-5. **Production-ready**: Docker, error handling, logging, security headers
+4. **Jakość**: Testy backend (63) + frontend (78), walidacja Pydantic
+5. **DevOps**: Docker, Gunicorn, Nginx, error handling, logging
 
 ### Technologie demonstrowane:
 - **Backend**: Python 3.11, Flask, PyMongo, Pydantic, JWT-Extended, Bcrypt
@@ -137,7 +137,7 @@ components/ | hooks/ | pages/ | api/ | redux/
 - **Service Layer**: Business logic oddzielona od API i danych
 - **Error Boundaries**: Graceful error handling w React
 - **Session Management**: Multi-tab coordination, page visibility API
-- **Type Safety**: Zero `any` w TypeScript, type hints w Pythonie
+- **Validation**: Pydantic schemas na backendzie, client-side walidacja na frontendzie
 
 ---
 
@@ -163,11 +163,11 @@ components/ | hooks/ | pages/ | api/ | redux/
 
 ✅ **Nie jest to "tylko CRUD"** — to demonstracja zaawansowanych wzorców bezpieczeństwa i architektury
 
-✅ **Production-ready mindset** — security headers, error handling, logging, testing
+✅ **Swiadome podejscie do security** — security headers, error handling, logging, testing
 
 ✅ **Zrozumienie full-stack** — od frontendu przez API po bazę danych
 
-✅ **Best practices** — SOLID, Clean Architecture, type safety, comprehensive testing
+✅ **Dobre praktyki** — SOLID, Clean Architecture, walidacja, testy na wielu poziomach
 
 ---
 

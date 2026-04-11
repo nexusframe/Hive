@@ -1,6 +1,6 @@
 # Hive Documentation
 
-This directory contains comprehensive documentation for the Hive system, organized according to the C4 model for software architecture.
+Documentation for the Hive system, organized according to the C4 model.
 
 ## Structure
 

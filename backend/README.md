@@ -1,198 +1,81 @@
-
 # Hive Backend API
 
-## Overview
+Flask REST API with JWT authentication, RBAC, and MongoDB.
 
-The Hive Backend is a secure, RESTful API designed to demonstrate robust architecture and security patterns. While it serves as the backend for the Hive Article Platform, its primary focus is showcasing:
-
-- **Layered Architecture**: Strict separation of Routes, Services, and Repositories.
-- **Security**: JWT authentication (HttpOnly), Rate Limiting, and Security Headers.
-- **Validation**: Pydantic-based request validation.
-- **Scalability**: Application Factory pattern and MongoDB integration.
-
-This repository contains the API, business logic, data access layers, and supporting utilities.
-
-## Project Structure
+## Structure
 
 ```
 backend/
 ├── app/
-│   ├── __init__.py          # Application factory
-│   ├── config.py            # Configuration settings (loads environment variables)
+│   ├── __init__.py          # Application factory (create_app)
+│   ├── config.py            # Configuration from environment variables
+│   ├── extensions.py        # Flask extensions (JWT, Limiter)
 │   ├── error_handlers.py    # Centralized error handling
-│   ├── routes/
-│   │   ├── __init__.py      # Route registration
-│   │   ├── article_routes.py  # API endpoints for articles
-│   │   ├── main_routes.py     # Home route
-│   │   └── user_routes.py     # API endpoints for user actions (register, login, logout, refresh)
-├── repositories/
-│   ├── base_article_repository.py
-│   ├── base_user_repository.py
-│   ├── db.py                # Database initialization
-│   ├── mongo_article_repository.py
-│   └── mongo_user_repository.py
+│   ├── schemas.py           # Pydantic request validation schemas
+│   └── routes/
+│       ├── article_routes.py
+│       ├── user_routes.py
+│       └── main_routes.py   # Home + /health endpoint
 ├── services/
-│   ├── article_service.py   # Business logic for articles
-│   └── user_service.py      # Business logic for user authentication and management
+│   ├── article_service.py
+│   └── user_service.py
+├── repositories/
+│   ├── base_article_repository.py   # Abstract base
+│   ├── base_user_repository.py      # Abstract base
+│   ├── mongo_article_repository.py
+│   ├── mongo_user_repository.py
+│   └── db.py                        # MongoDB connection + index creation
 ├── utilities/
+│   ├── auth_utils.py          # Cookie helpers
 │   ├── custom_exceptions.py
-│   └── logger.py            # Centralized logging
-├── __docs__/                # Documentation folder
-│   ├── useCases/
-│   │   ├── article/
-│   │   │   ├── UseCase_CreateArticle.md
-│   │   │   ├── UseCase_UpdateArticle.md
-│   │   │   ├── UseCase_GetArticle.md
-│   │   │   ├── UseCase_ListArticles.md
-│   │   │   ├── UseCase_DeleteArticle.md
-│   │   │   └── UseCase_SearchArticles.md
-│   │   └── user/
-│   │       ├── UseCase_RegisterUser.md
-│   │       ├── UseCase_LoginUser.md
-│   │       ├── UseCase_RefreshToken.md
-│   │       ├── UseCase_LogoutUser.md
-│   │       └── UseCase_DeleteUser.md
-├── __tests__/               # Updated test suite
-│   ├── article/
-│   │   ├── test_create_article.py
-│   │   ├── test_delete_article.py
-│   │   ├── test_get_article.py
-│   │   ├── test_list_articles.py
-│   │   ├── test_search_articles.py
-│   │   └── test_update_article.py
-│   └── user/
-│       ├── test_delete_user.py
-│       ├── test_login_user.py
-│       ├── test_logout_user.py
-│       ├── test_refresh_token.py
-│       └── test_register_user.py
+│   ├── decorators.py          # validate_request
+│   └── logger.py
+├── __tests__/
+│   ├── conftest.py            # Shared pytest fixtures
+│   ├── article/               # 6 test files (33 tests)
+│   └── user/                  # 9 test files (30 tests)
+├── wsgi.py                    # Gunicorn entry point
+├── app.py                     # Dev server entry point
 ├── requirements.txt
-├── Dockerfile
-└── README.md
+└── Dockerfile
 ```
 
-## Getting Started
+## Setup
 
-### Prerequisites
-
-- **Python 3.11** or higher  
-- **MongoDB** (local instance or MongoDB Atlas)  
-- **Docker** (optional, for containerized deployment)
-
-### Setup
-
-1. **Clone the Repository:**
-   ```bash
-   git clone https://github.com/yourusername/hive-backend.git
-   cd hive-backend
-   ```
-
-2. **Create Environment Variables:**
-
-   Create a `.env` file in the backend folder with variables similar to:
-
-   ```dotenv
-   SECRET_KEY=your_secret_key_here
-   JWT_SECRET_KEY=your_jwt_secret_key_here
-   MONGO_URI=mongodb://localhost:27017/
-   MONGO_DB_NAME=hive_db
-   TEST_MONGO_URI=mongodb://localhost:27017/
-   TEST_MONGO_DB_NAME=hive_db_test
-   FLASK_ENV=development
-   TESTING=true
-   LOG_LEVEL=WARNING
-   ```
-
-3. **Install Dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Run the Application:**
-   ```bash
-   python app.py
-   ```
-   Or using Docker:
-   ```bash
-   docker build -t hive-backend .
-   docker run -p 5000:5000 hive-backend
-   ```
-
-## API Documentation
-
-Access the Swagger UI at:
-```
-http://localhost:5000/api/docs
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp env.example .env  # edit with your values
 ```
 
-## Testing & Documentation
+## Run
 
-### Test Directory Structure
+```bash
+# Development
+python app.py
 
-All tests have been reorganized under the `__tests__` directory with subdirectories for different domains:
-
-```
-backend/
-└── __tests__/
-    ├── article/
-    │   ├── test_create_article.py
-    │   ├── test_delete_article.py
-    │   ├── test_get_article.py
-    │   ├── test_list_articles.py
-    │   ├── test_search_articles.py
-    │   └── test_update_article.py
-    └── user/
-        ├── test_delete_user.py
-        ├── test_login_user.py
-        ├── test_logout_user.py
-        ├── test_refresh_token.py
-        └── test_register_user.py
+# Production (Docker)
+gunicorn --bind 0.0.0.0:5000 --workers 4 wsgi:application
 ```
 
-Older tests (e.g. integration_seeder.py, test_article_service.py, test_integration_api.py, test_refresh.py, test_routes.py, test_ser_service.py) have been replaced by these updated tests and are available in version control if needed.
+## Test
 
-### Documentation
+```bash
+# Requires running MongoDB
+python -m pytest __tests__/ -v --tb=short
+```
 
-All use-case documentation is located in the `__docs__/useCases` folder. For example:
-- **Article use cases:** `__docs__/useCases/article/UseCase_CreateArticle.md`, `UseCase_UpdateArticle.md`, etc.
-- **User use cases:** `__docs__/useCases/user/UseCase_RegisterUser.md`, `UseCase_LoginUser.md`, etc.
+## API
 
-### Running the Tests
+Swagger UI: http://localhost:5000/api/docs
 
-To run tests using PowerShell, follow these steps:
+Health check: `GET /health` returns `{"status": "healthy", "database": "connected"}`
 
-1. Open PowerShell in the project root directory.
-2. Set the required environment variables:
-   ```powershell
-   PS> clear
-   PS> $env:LOG_LEVEL="WARNING"
-   PS> $env:TESTING="true"
-   ```
-3. Run the tests with coverage:
-   ```powershell
-   PS> coverage run --source=. -m unittest discover -s __tests__ --failfast
-   PS> coverage report -m
-   ```
+## Environment Variables
 
-## License
-
-[Specify your license here]
-
-## Technology Stack
-
-The backend stack for Hive includes:
-
-- **Python 3.8+ / 3.11:** The programming language used.
-- **Flask:** The web framework that powers the RESTful API.
-- **Flask-CORS:** To handle cross-origin resource sharing.
-- **Flask-JWT-Extended & PyJWT:** For JWT-based authentication.
-- **Flask-Limiter:** For rate limiting API endpoints.
-- **Flask-Swagger-UI:** For interactive API documentation.
-- **Pydantic:** For request validation and data modeling.
-- **PyMongo:** For interacting with MongoDB.
-- **python-dotenv:** For managing environment variables.
-- **bcrypt:** For secure password hashing.
-- **Docker:** For containerizing and deploying the application.
-- **Linting & Testing:** Using tools like Flake8, Pylint, and unittest for code quality and testing.
-
----
+See `env.example` for all required variables. Key ones:
+- `SECRET_KEY` — Flask session secret (required)
+- `JWT_SECRET_KEY` — JWT signing key (required)
+- `MONGO_URI` — MongoDB connection string
+- `FLASK_ENV` — `development` or `production`

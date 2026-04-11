@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react'
-
-const IS_DEVELOPMENT = process.env.NODE_ENV === 'development'
+import { IS_DEVELOPMENT } from '../config'
 
 /**
  * Custom hook to automatically refresh an access token.

@@ -1,3 +1,5 @@
+import re
+
 from utilities.logger import get_logger
 from utilities.custom_exceptions import RepositoryError
 from pymongo import errors
@@ -26,7 +28,7 @@ class MongoArticleRepository(BaseArticleRepository):
             )
             raise RepositoryError(f"Error creating article: {str(e)}") from e
 
-    def get_all_articles(self, skip=0, limit=2):
+    def get_all_articles(self, skip=0, limit=10):
         try:
             cursor = self.articles.find({}).sort("_id", 1).skip(skip).limit(limit)
             articles = []
@@ -91,15 +93,22 @@ class MongoArticleRepository(BaseArticleRepository):
 
     def search_articles(self, query):
         """
-        For now, perform a simple case-insensitive search in the title field.
+        Perform a case-insensitive search in both title and content fields.
         """
         try:
-            cursor = self.articles.find({"title": {"$regex": query, "$options": "i"}})
+            safe_query = re.escape(query)
+            regex_filter = {"$regex": safe_query, "$options": "i"}
+            cursor = self.articles.find({
+                "$or": [
+                    {"title": regex_filter},
+                    {"content": regex_filter}
+                ]
+            })
             articles = []
             for article in cursor:
                 article["article_id"] = str(article.pop("_id"))
                 articles.append(article)
             return articles
-        except Exception as e:
+        except errors.PyMongoError as e:
             logger.error("Error in search_articles", extra={"error": str(e)})
-            raise e
+            raise RepositoryError(f"Error searching articles: {str(e)}") from e

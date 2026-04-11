@@ -416,10 +416,14 @@ const wasLogoutDispatched = () =>
 
     await invokeRefresh()
 
-    // Wait for retries to complete
+    // Wait for retries to complete — should attempt multiple times (at least the 2 failures + 1 success)
     await waitFor(() => {
-      expect(mock.history.post.length).toBeGreaterThanOrEqual(1)
-    }, { timeout: 3000 })
+      const refreshPosts = mock.history.post.filter(r => r.url?.includes('/refresh'))
+      expect(refreshPosts.length).toBeGreaterThanOrEqual(2)
+    }, { timeout: 5000 })
+
+    // Verify multiple attempts were made (confirms retry behavior)
+    expect(callCount).toBeGreaterThanOrEqual(2)
   })
 
   test('logs out after all retry attempts fail', async () => {
@@ -503,10 +507,13 @@ const wasLogoutDispatched = () =>
       </MemoryRouter>
     )
 
-    // Should handle gracefully (within clock skew tolerance)
+    // Should handle gracefully (within clock skew tolerance) — no logout dispatched
     await waitFor(() => {
       expect(mock.history.get).toHaveLength(1)
     })
+
+    // Verify user is NOT logged out (clock skew within 5s tolerance should be accepted)
+    expect(wasLogoutDispatched()).toBe(false)
   })
 
   test('rejects token lifetime exceeding maximum (24 hours)', async () => {
@@ -525,6 +532,9 @@ const wasLogoutDispatched = () =>
       claims: { exp: farFutureExp }
     })
 
+    // Spy on console.error BEFORE render to catch the lifetime warning
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+
     render(
       <MemoryRouter>
         <Provider store={store}>
@@ -533,10 +543,18 @@ const wasLogoutDispatched = () =>
       </MemoryRouter>
     )
 
-    // Should use default lifetime instead of invalid one
     await waitFor(() => {
       expect(mock.history.get).toHaveLength(1)
     })
+
+    // Verify the component detected the excessive lifetime
+    await waitFor(() => {
+      const maxLifetimeWarning = consoleSpy.mock.calls.find(
+        call => typeof call[0] === 'string' && call[0].includes('Token lifetime exceeds maximum')
+      )
+      expect(maxLifetimeWarning).toBeDefined()
+    })
+    consoleSpy.mockRestore()
   })
 
   test('handles focus event for token validation', async () => {

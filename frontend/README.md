@@ -1,34 +1,52 @@
-## New Authentication Flow Using Redux Toolkit
+# Hive Frontend
 
-We've transitioned from the legacy AuthContext to a centralized authentication flow managed by Redux Toolkit. Key changes include:
+React 19 SPA with Redux Toolkit, JWT auth via HttpOnly cookies, and Tailwind CSS.
 
-- **authSlice.js:**  
-  Located in `src/redux/authSlice.js`, this slice uses `createSlice` and `createAsyncThunk` to manage authentication state. It handles:
-  - **Login:** An asynchronous thunk (`login`) sends credentials to the backend and updates state based on the API response.
-  - **Logout:** A synchronous action clears the authentication state.
-  - **setUser:** An optional synchronous action to manually set user data.
+## Setup
 
-- **Component Updates:**  
-  Components such as Login, Profile, and Navbar now use the Redux hooks `useSelector` and `useDispatch` to access and update authentication state. This makes our state management more predictable and easier to test.
+```bash
+npm install
+npm start        # Dev server on http://localhost:3000
+```
 
-- **Benefits:**  
-  - Centralized state management with a single source of truth.
-  - Improved testability through predictable state transitions.
-  - Simplified component logic as authentication state is now managed globally.
+## Test
 
-For further details, refer to the unit tests in `src/__tests__/authSlice.test.js` which demonstrate the expected behavior of our new auth slice.
+```bash
+npx jest --watchAll=false --verbose     # 78 tests, 20 suites
+npx jest --watchAll=false --coverage    # With coverage report
+```
 
+## Build
 
-## Technology Stack
+```bash
+npm run build    # Production build in build/
+```
 
-The frontend stack for Hive includes the following key technologies:
+## Architecture
 
-- **React:** Used for building the component-based UI.
-- **React Router:** Manages client-side navigation and routing.
-- **Redux Toolkit & Redux:** Manages global state, especially for user sessions and complex UI logic.
-- **Axios:** Handles HTTP requests to the backend API with interceptors for token refresh.
-- **Tailwind CSS:** Provides utility-first styling for a responsive design.
-- **Jest & React Testing Library:** Used for unit and integration testing.
-- **Cypress:** Provides end-to-end testing capabilities.
-- **Axios:** For making HTTP requests to the backend API.
-- **Babel & Webpack (or Create React App):** For transpiling and bundling the code.
+- **Redux Toolkit** — auth state (`authSlice`) with async thunks for login/logout/register/refresh
+- **Axios interceptors** — automatic 401 -> refresh -> retry flow
+- **SessionManager** — proactive token refresh, multi-tab coordination, visibility handling
+- **Protected routes** — `ProtectedRoute` + `PersistLogin` wrappers
+- **Tailwind CSS** — custom design system with amber brand colors, stone neutrals
+
+## Key Files
+
+```
+src/
+├── api/axiosInstance.js      # Axios with auth interceptors
+├── components/
+│   ├── Navbar.js             # Dark navbar with RBAC links
+│   ├── SessionManager.js     # Token refresh orchestration
+│   ├── ArticleCard.js        # Article list item
+│   ├── ArticleForm.js        # Create/edit form with validation
+│   └── ...
+├── pages/                    # Login, Register, Articles, Profile, Admin
+├── redux/slices/authSlice.js # Auth state + thunks
+├── hooks/useTokenRefresh.js  # Timer-based proactive refresh
+└── styles/index.css          # Tailwind + component classes
+```
+
+## Docker
+
+The Dockerfile uses a multi-stage build: Node build -> Nginx serve. Nginx proxies `/api/*` to the backend service.

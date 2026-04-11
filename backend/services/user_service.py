@@ -6,6 +6,7 @@ import jwt
 from utilities.logger import get_logger
 from repositories.mongo_user_repository import MongoUserRepository
 from utilities.custom_exceptions import UserNotFoundError, UnauthorizedError, ValidationError
+from utilities.constants import Roles
 
 logger = get_logger(__name__)
 
@@ -18,7 +19,7 @@ class UserService:
         self.repo = repository if repository is not None else MongoUserRepository()
         logger.info("UserService initialized", extra={"jwt_algorithm": self.jwt_algorithm})
 
-    def register_user(self, username, email, password, role="regular"):
+    def register_user(self, username, email, password, role=Roles.REGULAR):
         if not username or not username.strip():
             raise ValidationError("Username is required")
         if not email or not email.strip():
@@ -29,6 +30,10 @@ class UserService:
         if existing_user:
             logger.warning("Attempted to register user with existing username", extra={"username": username})
             raise ValidationError("User already exists")
+        existing_email = self.repo.find_by_email(email)
+        if existing_email:
+            logger.warning("Attempted to register user with existing email", extra={"email": email})
+            raise ValidationError("Email already registered")
         hashed_pw = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
         now_iso = datetime.datetime.now(timezone.utc).isoformat()
         user_data = {
@@ -53,8 +58,10 @@ class UserService:
         else:
             user = self.repo.find_by_username(username_or_email)
         if not user:
+            # Constant-time: always run bcrypt to prevent timing-based user enumeration
+            bcrypt.checkpw(password.encode("utf-8"), b'$2b$12$VZ3FfziFehuHvJcpoBtMSehXXHumOJeXtixBNToojmDGNcX7VQ.GG')
             logger.warning("Login attempt for non-existent user", extra={"username_or_email": username_or_email})
-            raise UnauthorizedError("User not found")
+            raise UnauthorizedError("Invalid credentials")
         if not bcrypt.checkpw(password.encode("utf-8"), user["password"]):
             logger.warning("Invalid credentials", extra={"username_or_email": username_or_email})
             raise UnauthorizedError("Invalid credentials")
@@ -96,7 +103,7 @@ class UserService:
                 refresh_token,
                 options={"verify_signature": False, "verify_exp": False}
             )
-        except Exception as e:
+        except (jwt.DecodeError, jwt.InvalidTokenError, ValueError) as e:
             logger.error("Error decoding refresh token", extra={"error": str(e)})
             raise UnauthorizedError("Invalid refresh token")
         if "sub" not in unverified_payload or "exp" not in unverified_payload:
@@ -181,6 +188,12 @@ class UserService:
             updated_user.pop("refresh_token")
         logger.info("User updated successfully", extra={"user_id": user_id})
         return {"message": "User updated successfully", "user": updated_user}
+
+    def list_users(self, page=1, size=10):
+        skip = (page - 1) * size
+        users = self.repo.list_users(skip=skip, limit=size)
+        logger.info("Listed users", extra={"page": page, "size": size, "count": len(users)})
+        return users
 
     def delete_user(self, user_id):
         success = self.repo.delete_user(user_id)

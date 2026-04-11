@@ -34,10 +34,7 @@ const ArticleDetail = () => {
         setLoading(false)
       }
     }
-
-    if (id) {
-      fetchArticle()
-    }
+    if (id) fetchArticle()
   }, [id])
 
   const formatDate = (dateString) => {
@@ -64,10 +61,7 @@ const ArticleDetail = () => {
   }
 
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this article? This action cannot be undone.')) {
-      return
-    }
-
+    if (!window.confirm('Are you sure you want to delete this article? This action cannot be undone.')) return
     setIsDeleting(true)
     try {
       await axiosInstance.delete(`/articles/${id}`)
@@ -88,79 +82,79 @@ const ArticleDetail = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <div className="text-gray-600">Loading article...</div>
+      <div className="flex flex-col items-center py-16 gap-3">
+        <div className="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin" />
+        <span className="text-stone-500 text-sm">Loading article...</span>
       </div>
     )
   }
 
   if (error && !article) {
     return (
-      <div className="p-8 max-w-4xl mx-auto">
-        <div className="text-center py-12">
-          <div className="text-red-600 text-lg mb-4">{error}</div>
-          <button
-            onClick={() => navigate('/articles')}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Back to Articles
-          </button>
-        </div>
+      <div className="text-center py-16">
+        <div className="text-red-500 text-lg mb-4">{error}</div>
+        <button onClick={() => navigate('/articles')} className="btn-secondary">
+          Back to Articles
+        </button>
       </div>
     )
   }
 
-  if (!article) {
-    return null
-  }
+  if (!article) return null
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+    <div className="max-w-3xl mx-auto">
+      {/* Back + actions */}
+      <div className="flex items-center justify-between mb-6">
         <button
           onClick={() => navigate('/articles')}
-          className="text-blue-600 hover:text-blue-800 hover:underline"
+          className="btn-ghost text-sm"
         >
-          ← Back to Articles
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Articles
         </button>
-        
+
         {canEditArticle(article, user) && (
-          <div className="flex space-x-2">
-            <Link
-              to={`/articles/${id}/edit`}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
+          <div className="flex items-center gap-2">
+            <Link to={`/articles/${id}/edit`} className="btn-secondary text-sm">
               Edit
             </Link>
             <AsyncButton
               onClick={handleDelete}
               initialLabel="Delete"
               loadingLabel="Deleting..."
-              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              className="btn-danger text-sm"
             />
           </div>
         )}
       </div>
 
-      <article>
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">{article.title}</h1>
-        
-        <div className="flex items-center gap-4 text-sm text-gray-600 mb-6 pb-4 border-b">
-          <span className="font-medium">By {article.author}</span>
-          <span>•</span>
-          <span>Created: {formatDate(article.created_at)}</span>
+      {/* Article */}
+      <article className="card p-8">
+        <h1 className="text-3xl font-bold text-stone-900 mb-4 leading-tight">{article.title}</h1>
+
+        <div className="flex flex-wrap items-center gap-3 text-sm text-stone-500 mb-8 pb-6 border-b border-stone-100">
+          <span className="flex items-center gap-1.5">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            {article.author}
+          </span>
+          <span className="text-stone-300">|</span>
+          <span>{formatDate(article.created_at)}</span>
           {article.updated_at && article.updated_at !== article.created_at && (
             <>
-              <span>•</span>
-              <span>Updated: {formatDate(article.updated_at)}</span>
+              <span className="text-stone-300">|</span>
+              <span className="text-stone-400">Updated: {formatDate(article.updated_at)}</span>
             </>
           )}
         </div>
 
-        <div className="prose max-w-none">
-          <div className="text-gray-800 whitespace-pre-wrap leading-relaxed">
-            {article.content}
-          </div>
+        <div className="text-stone-700 whitespace-pre-wrap leading-relaxed text-[1.05rem]">
+          {article.content}
         </div>
       </article>
     </div>
@@ -168,4 +162,3 @@ const ArticleDetail = () => {
 }
 
 export default ArticleDetail
-

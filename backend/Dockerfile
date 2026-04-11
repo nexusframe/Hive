@@ -1,7 +1,13 @@
-FROM python:3.11
-WORKDIR /app
+FROM python:3.11-slim
+WORKDIR /srv
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
 COPY . .
+
+RUN useradd -m appuser
+USER appuser
+
 EXPOSE 5000
-CMD ["python", "app.py"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "wsgi:application"]

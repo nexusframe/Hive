@@ -2,10 +2,11 @@
 References: backend/__docs__/useCases/article/UseCase_SearchArticles.md
 
 Test Scenarios:
-1. Successful search: Given a search query that matches one or more articles, 
-   expect GET /api/articles/search?query=... to return a 200 status and a non-empty array of articles.
-2. No matches: Given a search query that matches no articles, expect a 200 status with an empty array.
-3. Invalid parameters: If the search query is missing (or invalid), expect a 400 error with an appropriate message.
+1. Search by keyword in title -> returns matching articles
+2. Search by keyword in content only -> returns matching articles (bug fix verification)
+3. No matches -> empty list
+4. Missing query param -> 400
+5. Result count is correct (not returning everything)
 """
 
 import unittest
@@ -20,74 +21,80 @@ class TestSearchArticles(unittest.TestCase):
         Config.TESTING = True
         cls.app = create_app()
         cls.client = cls.app.test_client()
-        
-        # Connect to test DB
+
         cls.mongo_client = MongoClient(Config.MONGO_URI)
         cls.test_db = cls.mongo_client[Config.MONGO_DB_NAME]
-        # Clear articles collection
         cls.test_db.articles.delete_many({})
 
-        # Insert several test articles.
         articles = [
             {
                 "title": "Breaking News: Python Takes Over",
                 "content": "Python is now the world's most popular programming language.",
                 "author": "reporter1",
-                "created_at": "Fri, 28 Feb 2025 01:56:08 GMT",
-                "updated_at": "Fri, 28 Feb 2025 01:56:08 GMT"
             },
             {
                 "title": "Flask vs Django: A Comparative Analysis",
                 "content": "An in-depth comparison of Flask and Django frameworks.",
                 "author": "reporter2",
-                "created_at": "Fri, 28 Feb 2025 02:00:00 GMT",
-                "updated_at": "Fri, 28 Feb 2025 02:00:00 GMT"
             },
             {
                 "title": "Local News: Community Garden Flourishes",
                 "content": "The community garden project shows great promise.",
                 "author": "reporter3",
-                "created_at": "Fri, 28 Feb 2025 02:10:00 GMT",
-                "updated_at": "Fri, 28 Feb 2025 02:10:00 GMT"
             },
             {
                 "title": "Tech Insights: AI Revolution",
-                "content": "The AI revolution is transforming industries.",
+                "content": "Artificial intelligence is transforming industries worldwide.",
                 "author": "reporter4",
-                "created_at": "Fri, 28 Feb 2025 02:15:00 GMT",
-                "updated_at": "Fri, 28 Feb 2025 02:15:00 GMT"
-            }
+            },
         ]
-        result = cls.test_db.articles.insert_many(articles)
-        cls.inserted_ids = [str(_id) for _id in result.inserted_ids]
+        cls.test_db.articles.insert_many(articles)
 
-    def test_search_articles_success(self):
-        """Test that a valid search query returns matching articles."""
-        # Search for articles containing the keyword "Python"
+    def test_search_by_title(self):
+        """Search keyword that appears in title returns correct results."""
         resp = self.client.get("/api/articles/search?query=Python")
-        self.assertEqual(resp.status_code, 200, "Expected 200 status for valid search")
+        self.assertEqual(resp.status_code, 200)
         data = resp.get_json()
-        self.assertIsInstance(data, list, "Expected a list of articles")
-        # Expect at least one article that mentions Python
-        self.assertTrue(any("Python" in article["title"] or "Python" in article["content"]
-                            for article in data), "Expected at least one matching article")
+        self.assertEqual(len(data), 1, "Should return exactly 1 article matching 'Python' in title")
+        self.assertIn("Python", data[0]["title"])
 
-    def test_search_articles_no_matches(self):
-        """Test that a search query with no matching articles returns an empty list."""
+    def test_search_by_content_only(self):
+        """Search keyword that appears ONLY in content (not title) should still find it.
+        This verifies the fix for search only looking at title field."""
+        resp = self.client.get("/api/articles/search?query=artificial")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertEqual(len(data), 1, "Should find article with 'artificial' in content")
+        self.assertEqual(data[0]["title"], "Tech Insights: AI Revolution")
+
+    def test_search_case_insensitive(self):
+        """Search should be case-insensitive."""
+        resp = self.client.get("/api/articles/search?query=flask")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertIn("Flask", data[0]["title"])
+
+    def test_search_no_matches(self):
+        """Query with no matching articles returns empty list."""
         resp = self.client.get("/api/articles/search?query=nonexistentkeyword")
-        self.assertEqual(resp.status_code, 200, "Expected 200 status even when no matches")
+        self.assertEqual(resp.status_code, 200)
         data = resp.get_json()
-        self.assertIsInstance(data, list, "Expected a list of articles")
-        self.assertEqual(len(data), 0, "Expected an empty list for a query with no matches")
+        self.assertEqual(len(data), 0)
 
-    def test_search_articles_invalid_parameters(self):
-        """Test that a missing query parameter results in a 400 error."""
+    def test_search_missing_query(self):
+        """Missing query parameter returns 400."""
         resp = self.client.get("/api/articles/search")
-        self.assertEqual(resp.status_code, 400, "Expected 400 status when query parameter is missing")
-        data = resp.get_json()
-        self.assertIn("error", data)
-        self.assertIn("missing", data["error"].lower())
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("missing", resp.get_json()["error"].lower())
 
+    def test_search_does_not_return_all(self):
+        """Verify search actually filters — a specific query should NOT return all 4 articles."""
+        resp = self.client.get("/api/articles/search?query=Django")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertLess(len(data), 4, "Search should filter, not return all articles")
+        self.assertEqual(len(data), 1)
 
     @classmethod
     def tearDownClass(cls):

@@ -48,6 +48,11 @@ class Config:
                 "CORS_ORIGINS environment variable is required in production. "
                 "Set it to a comma-separated list of allowed origins."
             )
+        if CORS_ORIGINS.strip() == "*":
+            raise ValueError(
+                "CORS_ORIGINS cannot be '*' in production with credentials. "
+                "Set it to specific origin(s) like 'https://yourdomain.com'."
+            )
     else:
         # Default to localhost:3000 for development
         CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000")
@@ -67,6 +72,7 @@ class Config:
     else:
         JWT_COOKIE_SECURE = False
         JWT_COOKIE_CSRF_PROTECT = False
+        logger.warning("CSRF protection DISABLED (development mode). Do NOT deploy with FLASK_ENV=development.")
 
     JWT_ACCESS_COOKIE_NAME = "access_token"
     JWT_REFRESH_COOKIE_NAME = "refresh_token"

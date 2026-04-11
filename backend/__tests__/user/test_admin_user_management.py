@@ -19,6 +19,7 @@ from bson import ObjectId
 from app import create_app
 from app.config import Config
 from pymongo import MongoClient
+from utilities.constants import Roles
 
 class TestAdminUserManagement(unittest.TestCase):
 
@@ -39,11 +40,11 @@ class TestAdminUserManagement(unittest.TestCase):
             "username": "adminuser",
             "email": "admin@example.com",
             "password": "adminpass",
-            "role": "admin"
+            "role": Roles.ADMIN
         }
         admin_reg_resp = cls.admin_client.post("/api/register", json=admin_data)
         # Force role to admin in DB.
-        cls.test_db.users.update_one({"username": "adminuser"}, {"$set": {"role": "admin"}})
+        cls.test_db.users.update_one({"username": "adminuser"}, {"$set": {"role": Roles.ADMIN}})
         # Login as admin.
         login_resp = cls.admin_client.post(
             "/api/login",
@@ -62,10 +63,10 @@ class TestAdminUserManagement(unittest.TestCase):
             "username": "normaluser",
             "email": "normal@example.com",
             "password": "normalpass",
-            "role": "regular"
+            "role": Roles.REGULAR
         }
         cls.normal_client.post("/api/register", json=normal_data)
-        cls.test_db.users.update_one({"username": "normaluser"}, {"$set": {"role": "regular"}})
+        cls.test_db.users.update_one({"username": "normaluser"}, {"$set": {"role": Roles.REGULAR}})
         login_normal = cls.normal_client.post(
             "/api/login",
             json={"username_or_email": "normal@example.com", "password": "normalpass"}
@@ -111,17 +112,17 @@ class TestAdminUserManagement(unittest.TestCase):
     def test_update_user_success(self):
         update_data = {
             "email": "updated@example.com",
-            "role": "moderator"
+            "role": Roles.MODERATOR
         }
         resp = self.admin_client.put(f"/api/users/{self.user_id}", json=update_data)
         self.assertEqual(resp.status_code, 200, "Expected 200 status on successful update")
         data = resp.get_json()
         self.assertIn("message", data)
         self.assertEqual(data["message"], "User updated successfully")
-        
+
         updated_user = self.test_db.users.find_one({"_id": ObjectId(self.user_id)})
         self.assertEqual(updated_user["email"], "updated@example.com")
-        self.assertEqual(updated_user["role"], "moderator")
+        self.assertEqual(updated_user["role"], Roles.MODERATOR)
 
     def test_delete_user_success(self):
         resp = self.admin_client.delete(f"/api/users/{self.user_id}")

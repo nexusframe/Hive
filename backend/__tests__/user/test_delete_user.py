@@ -4,6 +4,7 @@ import json
 from app import create_app
 from app.config import Config
 from pymongo import MongoClient
+from utilities.constants import Roles
 
 class TestDeleteUser(unittest.TestCase):
 
@@ -24,8 +25,8 @@ class TestDeleteUser(unittest.TestCase):
             "password": "adminpass"
         }
         cls.client.post("/api/register", json=admin_data)
-        # Force the role to "admin" in the database.
-        cls.test_db.users.update_one({"username": "adminuser"}, {"$set": {"role": "admin"}})
+        # Force the role to admin in the database.
+        cls.test_db.users.update_one({"username": "adminuser"}, {"$set": {"role": Roles.ADMIN}})
         
         # Re-login as admin to ensure token contains updated role.
         login_resp = cls.client.post(

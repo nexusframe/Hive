@@ -11,7 +11,6 @@ const CreateArticle = () => {
   const user = useSelector((state) => state.auth.user)
   const [isLoading, setIsLoading] = useState(false)
 
-  // RBAC check: Only admin/moderator can create articles
   useEffect(() => {
     const role = user?.claims?.role || user?.role
     if (role !== 'admin' && role !== 'moderator') {
@@ -24,25 +23,14 @@ const CreateArticle = () => {
     setIsLoading(true)
     try {
       const response = await axiosInstance.post('/articles', { title, content })
-      
-      if (response.data.article_id) {
-        toast.success('Article created successfully', { autoClose: 2000 })
-        // Redirect to the new article detail page
-        navigate(`/articles/${response.data.article_id}`)
-      } else {
-        toast.success('Article created successfully', { autoClose: 2000 })
-        navigate('/articles')
-      }
+      toast.success('Article created successfully', { autoClose: 2000 })
+      navigate(response.data.article_id ? `/articles/${response.data.article_id}` : '/articles')
     } catch (err) {
       if (err.response?.status === 403) {
         toast.error('You do not have permission to create articles', { autoClose: 5000 })
         navigate('/articles')
-      } else if (err.response?.status === 400) {
-        const errorMessage = err.response?.data?.error || 'Invalid article data'
-        toast.error(errorMessage, { autoClose: 5000 })
       } else {
-        const errorMessage = err.response?.data?.error || 'Failed to create article'
-        toast.error(errorMessage, { autoClose: 5000 })
+        toast.error(err.response?.data?.error || 'Failed to create article', { autoClose: 5000 })
       }
       throw err
     } finally {
@@ -50,27 +38,20 @@ const CreateArticle = () => {
     }
   }
 
-  const handleCancel = () => {
-    navigate('/articles')
-  }
-
   const role = user?.claims?.role || user?.role
-  if (role !== 'admin' && role !== 'moderator') {
-    return null
-  }
+  if (role !== 'admin' && role !== 'moderator') return null
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6">Create Article</h2>
+    <div>
+      <h1 className="text-2xl font-bold text-stone-900 mb-6">Create Article</h1>
       <ArticleForm
         onSubmit={handleSubmit}
-        submitLabel="Create Article"
+        submitLabel="Publish Article"
         isLoading={isLoading}
-        onCancel={handleCancel}
+        onCancel={() => navigate('/articles')}
       />
     </div>
   )
 }
 
 export default CreateArticle
-

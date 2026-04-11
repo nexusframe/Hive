@@ -1,8 +1,7 @@
 // API Base URL configuration
 // Uses proxy when running locally (npm start) - makes requests same-origin for cookies
 // Override with REACT_APP_API_BASE_URL if needed
-export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 
-  (process.env.REACT_APP_DOCKER ? 'http://localhost:5000' : '')
+export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || ''
 
 // Token refresh buffer - time before expiration to trigger refresh (in milliseconds)
 export const REFRESH_BUFFER_MS = parseInt(process.env.REACT_APP_REFRESH_BUFFER_MS || '5000', 10)

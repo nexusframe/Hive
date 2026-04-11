@@ -5,6 +5,7 @@ __pycache__/
 venv/
 env/
 .venv/
+.venv-linux/
 .pytest_cache/
 .coverage
 htmlcov/
@@ -27,7 +28,9 @@ frontend/.env
 .vscode/
 .idea/
 .cursor/
+.claude
 .cursorrules
+CLAUDE.md
 
 # OS
 .DS_Store
