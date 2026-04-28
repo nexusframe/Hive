@@ -69,14 +69,14 @@ npm start
 
 ## Testing
 
-### Backend (63 tests, pytest)
+### Backend (50+ tests, pytest)
 ```bash
 cd backend
 source .venv/bin/activate
 python -m pytest __tests__/ -v
 ```
 
-### Frontend (78 tests, Jest + React Testing Library)
+### Frontend (60+ tests, Jest + React Testing Library)
 ```bash
 cd frontend
 npx jest --watchAll=false --verbose

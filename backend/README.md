@@ -32,8 +32,8 @@ backend/
 │   └── logger.py
 ├── __tests__/
 │   ├── conftest.py            # Shared pytest fixtures
-│   ├── article/               # 6 test files (33 tests)
-│   └── user/                  # 9 test files (30 tests)
+│   ├── article/               # 6 test files (32 tests)
+│   └── user/                  # 9 test files (25 tests)
 ├── wsgi.py                    # Gunicorn entry point
 ├── app.py                     # Dev server entry point
 ├── requirements.txt

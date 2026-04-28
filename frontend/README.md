@@ -12,7 +12,7 @@ npm start        # Dev server on http://localhost:3000
 ## Test
 
 ```bash
-npx jest --watchAll=false --verbose     # 78 tests, 20 suites
+npx jest --watchAll=false --verbose     # 69 tests
 npx jest --watchAll=false --coverage    # With coverage report
 ```
 
