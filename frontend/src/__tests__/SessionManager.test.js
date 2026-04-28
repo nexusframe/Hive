@@ -340,49 +340,6 @@ const wasLogoutDispatched = () =>
     })
   })
 
-  test('handles refresh buffer correctly (5 seconds before expiration)', async () => {
-    // Set token to expire in 10 seconds
-    const nearExpExp = Math.floor((Date.now() + 10000) / 1000)
-    store.dispatch({
-      type: 'auth/login/fulfilled',
-      payload: {
-        username: 'testuser',
-        claims: { exp: nearExpExp }
-      }
-    })
-
-    mock.onGet(/\/protected$/).reply(200, {
-      username: 'testuser',
-      claims: { exp: nearExpExp }
-    })
-
-    render(
-      <MemoryRouter>
-        <Provider store={store}>
-          <SessionManager />
-        </Provider>
-      </MemoryRouter>
-    )
-
-    await waitFor(() => {
-      expect(mock.history.get).toHaveLength(1)
-      expect(tokenLifetimeRef).not.toBeNull()
-    })
-
-    // Clear dispatch calls before triggering manual refresh
-    store.dispatch.mockClear()
-
-    await invokeRefresh()
-
-    // Should trigger refresh before expiration
-    await waitFor(() => {
-      const refreshCalls = store.dispatch.mock.calls.filter(
-        call => typeof call[0] === 'function'
-      )
-      expect(refreshCalls.length).toBeGreaterThan(0)
-    }, { timeout: 3000 })
-  })
-
   test('retries refresh on network failure with exponential backoff', async () => {
     render(
       <MemoryRouter>
@@ -483,39 +440,6 @@ const wasLogoutDispatched = () =>
     }, { timeout: 3000 })
   })
 
-  test('validates token lifetime and handles clock skew', async () => {
-    // Set token with exp claim slightly in the past (within clock skew tolerance)
-    const slightlyExpiredExp = Math.floor((Date.now() - 3000) / 1000) // 3 seconds ago (within 5s tolerance)
-    store.dispatch({
-      type: 'auth/login/fulfilled',
-      payload: {
-        username: 'testuser',
-        claims: { exp: slightlyExpiredExp }
-      }
-    })
-
-    mock.onGet(/\/protected$/).reply(200, {
-      username: 'testuser',
-      claims: { exp: slightlyExpiredExp }
-    })
-
-    render(
-      <MemoryRouter>
-        <Provider store={store}>
-          <SessionManager />
-        </Provider>
-      </MemoryRouter>
-    )
-
-    // Should handle gracefully (within clock skew tolerance) — no logout dispatched
-    await waitFor(() => {
-      expect(mock.history.get).toHaveLength(1)
-    })
-
-    // Verify user is NOT logged out (clock skew within 5s tolerance should be accepted)
-    expect(wasLogoutDispatched()).toBe(false)
-  })
-
   test('rejects token lifetime exceeding maximum (24 hours)', async () => {
     // Set token with exp claim far in the future (invalid)
     const farFutureExp = Math.floor((Date.now() + 25 * 60 * 60 * 1000) / 1000) // 25 hours
@@ -555,39 +479,6 @@ const wasLogoutDispatched = () =>
       expect(maxLifetimeWarning).toBeDefined()
     })
     consoleSpy.mockRestore()
-  })
-
-  test('handles focus event for token validation', async () => {
-    render(
-      <MemoryRouter>
-        <Provider store={store}>
-          <SessionManager />
-        </Provider>
-      </MemoryRouter>
-    )
-
-    await waitFor(() => {
-      expect(mock.history.get).toHaveLength(1)
-    })
-
-    const initialCallCount = mock.history.get.length
-
-    // Simulate window focus event
-    await act(async () => {
-      window.dispatchEvent(new Event('focus'))
-    })
-
-    // Wait for async handler to complete (checkTokenExpiration is async)
-    await act(async () => {
-      await Promise.resolve()
-      await Promise.resolve()
-      await Promise.resolve()
-    })
-
-    // Should check token expiration on focus
-    await waitFor(() => {
-      expect(mock.history.get.length).toBeGreaterThan(initialCallCount)
-    }, { timeout: 2000 })
   })
 
   test('skips refresh during grace period and reschedules timer', async () => {

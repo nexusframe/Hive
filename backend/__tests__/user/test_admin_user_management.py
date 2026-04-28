@@ -134,6 +134,13 @@ class TestAdminUserManagement(unittest.TestCase):
         user_in_db = self.test_db.users.find_one({"_id": ObjectId(self.user_id)})
         self.assertIsNone(user_in_db, "User should no longer exist in the database")
 
+    def test_update_user_no_data(self):
+        resp = self.admin_client.put(f"/api/users/{self.user_id}", json={})
+        self.assertEqual(resp.status_code, 400, "Expected 400 status when no update data provided")
+        data = resp.get_json()
+        self.assertIn("error", data)
+        self.assertIn("no update data provided", data["error"].lower())
+
     def test_update_user_not_found(self):
         nonexistent_id = "000000000000000000000000"
         update_data = {"email": "doesnotexist@example.com"}

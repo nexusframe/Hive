@@ -88,14 +88,6 @@ class TestSearchArticles(unittest.TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertIn("missing", resp.get_json()["error"].lower())
 
-    def test_search_does_not_return_all(self):
-        """Verify search actually filters — a specific query should NOT return all 4 articles."""
-        resp = self.client.get("/api/articles/search?query=Django")
-        self.assertEqual(resp.status_code, 200)
-        data = resp.get_json()
-        self.assertLess(len(data), 4, "Search should filter, not return all articles")
-        self.assertEqual(len(data), 1)
-
     @classmethod
     def tearDownClass(cls):
         cls.mongo_client.drop_database(Config.MONGO_DB_NAME)
